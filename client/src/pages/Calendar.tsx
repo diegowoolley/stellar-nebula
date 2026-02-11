@@ -13,7 +13,6 @@ import {
     Calendar as CalendarIcon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import clsx from 'clsx';
 import {
     format,
@@ -30,13 +29,16 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { EventDetailsModal } from '../components/calendar/EventDetailsModal';
+import api from '../services/api';
 
+// Interface para os dados dos artistas
 interface Artist {
     id: string;
     name: string;
     logo_url?: string;
 }
 
+// Interface para os dados dos eventos/shows
 interface EventData {
     id: string;
     artist_id: string;
@@ -49,6 +51,8 @@ interface EventData {
 
 export const Calendar = () => {
     const navigate = useNavigate();
+
+    // Estados para controle de dados e UI
     const [artists, setArtists] = useState<Artist[]>([]);
     const [events, setEvents] = useState<EventData[]>([]);
     const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
@@ -57,19 +61,21 @@ export const Calendar = () => {
     const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
+    // Efeito para buscar dados sempre que os filtros de artista ou status mudarem
     useEffect(() => {
         fetchData();
-    }, [selectedArtistId, selectedStatus]); // Recarregar se filtros mudarem
+    }, [selectedArtistId, selectedStatus]);
 
+    // Função para buscar artistas e eventos do backend via api service
     const fetchData = async () => {
         try {
             const [artistsRes, eventsRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/artists'),
-                axios.get('http://localhost:5000/api/events')
+                api.get('/artists'),
+                api.get('/events')
             ]);
             setArtists(artistsRes.data);
 
-            // Filtro local (ou poderia ser via query no backend)
+            // Filtra os eventos localmente com base nos seletores da UI
             let filteredEvents = eventsRes.data;
             if (selectedArtistId) {
                 filteredEvents = filteredEvents.filter((e: any) => e.artist_id === selectedArtistId);
@@ -83,10 +89,12 @@ export const Calendar = () => {
         }
     };
 
+    // Funções de navegação do calendário
     const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
     const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
     const goToToday = () => setCurrentMonth(new Date());
 
+    // Altera a seleção de status no filtro
     const toggleStatus = (status: string) => {
         setSelectedStatus(prev =>
             prev.includes(status)
@@ -95,10 +103,10 @@ export const Calendar = () => {
         );
     };
 
-    // Lógica da Grade do Calendário
+    // Cálculos para a grade do calendário usando date-fns
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart, { weekStartsOn: 0 });
+    const startDate = startOfWeek(monthStart, { weekStartsOn: 0 }); // Domingo
     const endDate = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
     const calendarDays = eachDayOfInterval({
@@ -106,6 +114,7 @@ export const Calendar = () => {
         end: endDate,
     });
 
+    // Retorna o ícone correspondente ao status do evento
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'confirmed': return <CheckCircle2 size={10} />;
@@ -115,6 +124,7 @@ export const Calendar = () => {
         }
     };
 
+    // Lida com o clique em um evento para abrir detalhes
     const handleEventClick = (event: EventData) => {
         setSelectedEvent(event);
         setIsDetailsOpen(true);
@@ -122,6 +132,7 @@ export const Calendar = () => {
 
     return (
         <div className="space-y-6">
+            {/* Modal de Detalhes do Evento */}
             <EventDetailsModal
                 isOpen={isDetailsOpen}
                 onClose={() => setIsDetailsOpen(false)}
@@ -129,7 +140,8 @@ export const Calendar = () => {
                 onUpdate={fetchData}
                 onEventUpdate={setSelectedEvent}
             />
-            {/* Header */}
+
+            {/* Cabeçalho de Título e Ação */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-[var(--text-main)]">Agenda</h1>
@@ -144,9 +156,9 @@ export const Calendar = () => {
                 </button>
             </div>
 
-            {/* Filtros */}
+            {/* Filtros de Visualização */}
             <div className="card p-4 space-y-6">
-                {/* Artistas */}
+                {/* Seletor de Artistas (Horizontal Scroll) */}
                 <div className="space-y-3">
                     <div className="flex items-center space-x-2 text-[var(--text-main)]">
                         <UsersIcon size={16} strokeWidth={2.5} />
@@ -211,7 +223,7 @@ export const Calendar = () => {
                     </div>
                 </div>
 
-                {/* Status */}
+                {/* Filtro por Status do Evento */}
                 <div className="space-y-3 pt-2">
                     <div className="flex items-center space-x-2 text-[var(--text-main)]">
                         <Filter size={16} strokeWidth={2.5} />
@@ -245,8 +257,9 @@ export const Calendar = () => {
                 </div>
             </div>
 
-            {/* Calendário */}
+            {/* Container do Calendário Principal */}
             <div className="card h-full min-h-[600px] flex flex-col overflow-hidden">
+                {/* Barra de Ferramentas do Calendário (Mês atual e navegação) */}
                 <div className="p-4 border-b border-[var(--border-main)] flex items-center justify-between bg-[var(--bg-sidebar)] sticky top-0 z-10">
                     <div className="flex items-center space-x-4">
                         <h2 className="text-lg font-bold text-[var(--text-main)] min-w-[150px]">
@@ -274,6 +287,7 @@ export const Calendar = () => {
                         </button>
                     </div>
 
+                    {/* Seletores de Visualização (Mês/Semana/Dia) - Apenas Desktop */}
                     <div className="hidden sm:flex items-center bg-[var(--bg-main)] rounded p-1 shadow-inner border border-[var(--border-main)]">
                         <button className="px-4 py-1.5 text-xs font-bold bg-[var(--bg-sidebar)] shadow-sm rounded text-[var(--text-main)]">Mês</button>
                         <button className="px-4 py-1.5 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">Semana</button>
@@ -281,9 +295,9 @@ export const Calendar = () => {
                     </div>
                 </div>
 
-                {/* Grade do Calendário (Desktop) */}
+                {/* Grade do Calendário (Versão Desktop) */}
                 <div className="hidden lg:flex flex-1 flex-col">
-                    {/* Dias da Semana */}
+                    {/* Linha dos Dias da Semana */}
                     <div className="grid grid-cols-7 border-b border-[var(--border-main)] bg-[var(--bg-main)]/50">
                         {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
                             <div key={day} className="py-2.5 text-center text-[10px] font-black text-[var(--text-muted)] opacity-60 uppercase tracking-[0.2em]">
@@ -292,7 +306,7 @@ export const Calendar = () => {
                         ))}
                     </div>
 
-                    {/* Dias do Mês */}
+                    {/* Grade de Células de Dias */}
                     <div className="flex-1 grid grid-cols-7 divide-x divide-y divide-[var(--border-main)]">
                         {calendarDays.map((day) => {
                             const dayEvents = events.filter(e => isSameDay(parseISO(e.date), day));
@@ -322,6 +336,7 @@ export const Calendar = () => {
                                         )}
                                     </div>
 
+                                    {/* Lista de Eventos no Dia */}
                                     <div className="space-y-1 overflow-y-auto max-h-[85px] scrollbar-hide">
                                         {dayEvents.map(event => (
                                             <div
@@ -353,7 +368,7 @@ export const Calendar = () => {
                                         ))}
                                     </div>
 
-                                    {/* Botão de adicionar evento - Oculto para datas passadas */}
+                                    {/* Botão de adicionar evento rápido no dia (Hovet) */}
                                     {(!isSameDay(day, new Date()) && day < new Date()) ? null : (
                                         <button
                                             className="absolute bottom-1.5 right-1.5 p-1.5 bg-[var(--bg-sidebar)] text-[var(--text-muted)] hover:text-primary-600 rounded-full border border-[var(--border-main)] opacity-0 group-hover:opacity-100 shadow-md transition-all hover:scale-110"
@@ -369,7 +384,7 @@ export const Calendar = () => {
                     </div>
                 </div>
 
-                {/* Mobile View (Cards) */}
+                {/* Exibição para Mobile (Lista de Cards) */}
                 <div className="lg:hidden flex-1 overflow-y-auto bg-[var(--bg-main)] p-4 space-y-4 min-h-[400px]">
                     {events.filter(e => isSameMonth(parseISO(e.date), currentMonth)).length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -394,7 +409,7 @@ export const Calendar = () => {
                                         )}
                                     >
                                         <div className="flex">
-                                            {/* Faixa Lateral de Data */}
+                                            {/* Faixa Lateral com Data (Estilo Mobile) */}
                                             <div className={clsx(
                                                 "w-16 flex flex-col items-center justify-center border-r border-[var(--border-main)]",
                                                 event.status === 'confirmed' ? "bg-green-500/10 text-green-600" :
@@ -406,7 +421,7 @@ export const Calendar = () => {
                                                 <span className="text-[9px] font-black opacity-60 mt-1">{format(eventDate, 'HH:mm')}</span>
                                             </div>
 
-                                            {/* Conteúdo do Card */}
+                                            {/* Informações Resumidas do Evento */}
                                             <div className="flex-1 p-3 flex items-center space-x-3">
                                                 <div className="w-12 h-12 rounded-xl bg-[var(--bg-main)] overflow-hidden flex-shrink-0 border border-[var(--border-main)]">
                                                     {event.artists?.logo_url ? (
@@ -439,7 +454,7 @@ export const Calendar = () => {
                     )}
                 </div>
 
-                {/* Footer / Legenda */}
+                {/* Legenda de Cores de Status no Rodapé */}
                 <div className="p-4 bg-[var(--bg-main)]/50 border-t border-[var(--border-main)] flex flex-wrap items-center justify-center gap-6">
                     <div className="flex items-center space-x-2">
                         <div className="w-2.5 h-2.5 bg-green-500 rounded-full shadow-md"></div>

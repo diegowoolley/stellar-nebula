@@ -26,10 +26,12 @@ export const AppLayout = () => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const location = useLocation();
 
+    // Redireciona para o login se não estiver autenticado
     if (!isAuthenticated) {
         return <Navigate to="/login" />;
     }
 
+    // Definição dos itens de navegação lateral
     const navigation = [
         { name: 'Dashboard', href: '/', icon: LayoutDashboard },
         { name: 'Agenda', href: '/calendar', icon: Calendar },
@@ -40,16 +42,18 @@ export const AppLayout = () => {
 
     return (
         <div className="min-h-screen">
-            {/* Sidebar Desktop */}
+            {/* Sidebar (Barra Lateral) Desktop */}
             <aside className="fixed inset-y-0 left-0 hidden lg:flex lg:flex-col w-64 bg-[var(--bg-sidebar)] border-r border-[var(--border-main)] z-50">
                 <div className="flex flex-col flex-1 min-h-0">
+                    {/* Logo e Nome do Sistema */}
                     <div className="flex items-center h-16 px-6 border-b border-[var(--border-main)]">
                         <div className="w-8 h-8 bg-primary-600 rounded flex items-center justify-center mr-3">
                             <div className="w-4 h-4 bg-white rounded-full"></div>
                         </div>
-                        <span className="text-lg font-bold tracking-tight text-[var(--text-main)]">Stellar<span className="text-primary-600">Nebula</span></span>
+                        <span className="text-lg font-bold tracking-tight text-[var(--text-main)]">Dw <span className="text-primary-600">Sistemas</span></span>
                     </div>
 
+                    {/* Links de Navegação */}
                     <nav className="flex-1 px-3 py-4 space-y-1">
                         {navigation.map((item) => {
                             const isActive = location.pathname === item.href;
@@ -71,6 +75,7 @@ export const AppLayout = () => {
                         })}
                     </nav>
 
+                    {/* Botão de Sair (Logout) na base da Sidebar */}
                     <div className="p-4 border-t border-[var(--border-main)]">
                         <button
                             onClick={logout}
@@ -83,16 +88,18 @@ export const AppLayout = () => {
                 </div>
             </aside>
 
-            {/* Mobile Header */}
+            {/* Cabeçalho para Mobile */}
             <div className="lg:hidden flex items-center justify-between bg-[var(--bg-sidebar)] border-b border-[var(--border-main)] h-16 px-4">
-                <span className="font-bold text-[var(--text-main)]">StellarNebula</span>
+                <span className="font-bold text-[var(--text-main)]">Dw Sistemas</span>
                 <div className="flex items-center space-x-2">
+                    {/* Toggle de Tema no Mobile */}
                     <button
                         onClick={toggleTheme}
                         className="p-2 text-[var(--text-muted)] hover:bg-[var(--bg-main)] rounded-full transition-all"
                     >
                         {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                     </button>
+                    {/* Botão de Menu para abrir/fechar o overlay de navegação */}
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         className="p-2 text-[var(--text-muted)]"
@@ -102,7 +109,7 @@ export const AppLayout = () => {
                 </div>
             </div>
 
-            {/* Mobile Menu Overlay */}
+            {/* Overlay do Menu Mobile (quando aberto) */}
             {isMobileMenuOpen && (
                 <div className="lg:hidden fixed inset-0 z-40 bg-[var(--bg-sidebar)] pt-16">
                     <nav className="px-4 py-4 space-y-2">
@@ -121,10 +128,11 @@ export const AppLayout = () => {
                 </div>
             )}
 
-            {/* Main Content */}
+            {/* Conteúdo Principal (Main) */}
             <div className="lg:pl-64 flex flex-col flex-1">
-                {/* Header Navbar Desktop */}
+                {/* Cabeçalho Superior (Navbar) para Desktop */}
                 <header className="hidden lg:flex sticky top-0 z-40 bg-[var(--bg-sidebar)] border-b border-[var(--border-main)] h-16 items-center px-8 justify-between">
+                    {/* Barra de Pesquisa */}
                     <div className="flex items-center flex-1">
                         <div className="relative w-96 max-w-full">
                             <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-[var(--text-muted)]">
@@ -138,7 +146,9 @@ export const AppLayout = () => {
                         </div>
                     </div>
 
+                    {/* Ações do Usuário (Tema, Notificações, Perfil) */}
                     <div className="flex items-center space-x-4">
+                        {/* Toggle de Tema Dark/Light */}
                         <button
                             onClick={toggleTheme}
                             className="p-2 text-[var(--text-muted)] hover:bg-[var(--bg-main)] rounded-full transition-all"
@@ -147,16 +157,18 @@ export const AppLayout = () => {
                             {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                         </button>
 
+                        {/* Botão de Notificações */}
                         <button className="p-2 text-[var(--text-muted)] hover:bg-[var(--bg-main)] rounded-full transition-all">
                             <Bell size={18} />
                         </button>
 
                         <div className="h-6 w-px bg-secondary-200"></div>
 
+                        {/* Menu de Perfil do Usuário */}
                         <div className="relative">
                             <button
                                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                                className="flex items-center space-x-3 pl-2 hover:bg-secondary-50 p-1.5 rounded-lg transition-all"
+                                className="flex items-center space-x-3 pl-2 hover:bg-[var(--bg-main)] p-1.5 rounded-lg transition-all"
                             >
                                 <div className="text-right hidden sm:block">
                                     <p className="text-sm font-semibold text-[var(--text-main)] leading-none">{user?.name}</p>
@@ -172,6 +184,7 @@ export const AppLayout = () => {
                                 <ChevronDown size={14} className={clsx("text-secondary-400 transition-transform", isProfileOpen && "rotate-180")} />
                             </button>
 
+                            {/* Dropdown de opções do perfil */}
                             {isProfileOpen && (
                                 <>
                                     <div
@@ -210,6 +223,7 @@ export const AppLayout = () => {
                     </div>
                 </header>
 
+                {/* Renderização das rotas filhas via Outlet */}
                 <main className="p-8">
                     <div className="max-w-7xl mx-auto">
                         <Outlet />

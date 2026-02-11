@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { Users as UsersIcon, Search, Plus, Mail, Shield, User, X, Save, Edit2, Trash2, Key } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import clsx from 'clsx';
 
 interface UserData {
@@ -37,7 +37,7 @@ export const Users = () => {
     const fetchUsers = async () => {
         setIsLoading(true);
         try {
-            const res = await axios.get('http://localhost:5000/api/users');
+            const res = await api.get('/users');
             setUsers(res.data);
         } catch (error) {
             console.error(error);
@@ -71,9 +71,9 @@ export const Users = () => {
         setIsSubmitting(true);
         try {
             if (editingUser) {
-                await axios.put(`http://localhost:5000/api/users/${editingUser.id}`, formData);
+                await api.put(`/users/${editingUser.id}`, formData);
             } else {
-                await axios.post('http://localhost:5000/api/users', formData);
+                await api.post('/users', formData);
             }
             fetchUsers();
             setIsSidebarOpen(false);
@@ -94,7 +94,7 @@ export const Users = () => {
         uploadFormData.append('file', file);
 
         try {
-            const res = await axios.post('http://localhost:5000/api/users/upload-avatar', uploadFormData, {
+            const res = await api.post('/users/upload-avatar', uploadFormData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setFormData(prev => ({ ...prev, avatar_url: res.data.url }));
@@ -110,7 +110,7 @@ export const Users = () => {
         if (!confirm('Excluir este usuário permanentemente?')) return;
 
         try {
-            await axios.delete(`http://localhost:5000/api/users/${id}`);
+            await api.delete(`/users/${id}`);
             fetchUsers();
         } catch (error) {
             alert('Erro ao excluir usuário.');

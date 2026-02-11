@@ -6,34 +6,38 @@ import type { AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 
-// LISTAR todos os contratantes
+// LISTAR todos os contratantes (Ordenado por nome)
 router.get('/', authenticateUser, async (req: AuthRequest, res: Response) => {
     const { data, error } = await supabase.from('contractors').select('*').order('name');
     if (error) return res.status(500).json({ error: error.message });
     res.json(data);
 });
 
-// CRIAR contratante
+// CRIAR um novo contratante
 router.post('/', authenticateUser, authorizeRole(['admin', 'producer']), async (req: AuthRequest, res: Response) => {
-    const { name, phone, email } = req.body;
-    const { data, error } = await supabase.from('contractors').insert({ name, phone, email }).select().single();
+    const { name, contact_email, phone } = req.body;
+    const { data, error } = await supabase.from('contractors').insert({ name, contact_email, phone }).select().single();
     if (error) return res.status(400).json({ error: error.message });
     res.status(201).json(data);
 });
 
-// ATUALIZAR contratante
+// ATUALIZAR dados de um contratante existente
 router.put('/:id', authenticateUser, authorizeRole(['admin', 'producer']), async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
-    const { name, phone, email } = req.body;
-    const { data, error } = await supabase.from('contractors').update({ name, phone, email }).eq('id', id).select().single();
+    const updates = req.body;
+    const { data, error } = await supabase
+        .from('contractors')
+        .update(updates)
+        .eq('id', req.params.id)
+        .select()
+        .single();
+
     if (error) return res.status(400).json({ error: error.message });
     res.json(data);
 });
 
-// EXCLUIR contratante
+// DELETAR um contratante (Apenas administradores)
 router.delete('/:id', authenticateUser, authorizeRole(['admin']), async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
-    const { error } = await supabase.from('contractors').delete().eq('id', id);
+    const { error } = await supabase.from('contractors').delete().eq('id', req.params.id);
     if (error) return res.status(400).json({ error: error.message });
     res.status(204).send();
 });

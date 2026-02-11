@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
 import { Plus, Trash2, Edit2, MoreVertical, Music, X, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import clsx from 'clsx';
 
 interface Artist {
@@ -32,7 +32,7 @@ export const Artists = () => {
     const fetchArtists = async () => {
         setIsLoading(true);
         try {
-            const res = await axios.get('http://localhost:5000/api/artists');
+            const res = await api.get('/artists');
             setArtists(res.data);
         } catch (error) {
             console.error(error);
@@ -44,7 +44,7 @@ export const Artists = () => {
     const handleDelete = async (id: string) => {
         if (!confirm('Tem certeza? Este artista será removido permanentemente.')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/artists/${id}`);
+            await api.delete(`/artists/${id}`);
             fetchArtists();
         } catch (error) {
             alert('Erro ao excluir artista.');
@@ -71,7 +71,7 @@ export const Artists = () => {
         fData.append('file', file);
 
         try {
-            const res = await axios.post('http://localhost:5000/api/artists/upload', fData, {
+            const res = await api.post('/artists/upload', fData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setFormData(prev => ({ ...prev, logo_url: res.data.url }));
@@ -89,9 +89,9 @@ export const Artists = () => {
         setIsSubmitting(true);
         try {
             if (editingArtist) {
-                await axios.put(`http://localhost:5000/api/artists/${editingArtist.id}`, formData);
+                await api.put(`/artists/${editingArtist.id}`, formData);
             } else {
-                await axios.post('http://localhost:5000/api/artists', formData);
+                await api.post('/artists', formData);
             }
             fetchArtists();
             setIsSidebarOpen(false);

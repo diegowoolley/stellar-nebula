@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { LogIn, User, Lock } from 'lucide-react';
+import { LogIn, User, Lock, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 export const Login = () => {
+    // Estados para armazenar credenciais, erros e carregamento
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
 
+    // Lida com o envio do formulário de login
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -30,8 +34,17 @@ export const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex bg-[var(--bg-main)]">
-            {/* Lado Esquerdo - Branding/Imagem */}
+        <div className="min-h-screen flex bg-[var(--bg-main)] relative">
+            {/* Alternador de Tema (Toggle) - Canto Superior Direito */}
+            <button
+                onClick={toggleTheme}
+                className="absolute top-6 right-6 p-3 rounded-xl bg-[var(--bg-sidebar)] border border-[var(--border-main)] text-[var(--text-main)] hover:bg-[var(--bg-main)] transition-all z-20 shadow-lg"
+                title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
+            >
+                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
+
+            {/* Lado Esquerdo - Branding e Elementos Visuais */}
             <div className="hidden lg:flex w-1/2 bg-primary-950 justify-center items-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-800 to-indigo-950 opacity-95"></div>
                 {/* Círculos decorativos */}
@@ -44,7 +57,7 @@ export const Login = () => {
                             <LogIn size={40} className="text-white" />
                         </div>
                     </div>
-                    <h1 className="text-4xl font-bold mb-4">ArtManager</h1>
+                    <h1 className="text-4xl font-bold mb-4">Dw Sistemas</h1>
                     <p className="text-primary-100 text-lg max-w-md mx-auto">
                         A plataforma completa para gestão de eventos artísticos, artistas e contratantes.
                     </p>
@@ -114,9 +127,9 @@ export const Login = () => {
                                 </label>
                             </div>
                             <div className="text-sm">
-                                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
+                                <Link to="/forgot-password" title="recuperação" className="font-medium text-primary-600 hover:text-primary-500">
                                     Esqueceu a senha?
-                                </a>
+                                </Link>
                             </div>
                         </div>
 
@@ -130,7 +143,7 @@ export const Login = () => {
                     </form>
 
                     <div className="mt-6 text-center text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-[0.2em]">
-                        <p>&copy; 2024 ArtManager. Todos os direitos reservados.</p>
+                        <p>&copy; 2024 Dw Sistemas. Todos os direitos reservados.</p>
                     </div>
                 </div>
             </div>

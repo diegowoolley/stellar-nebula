@@ -1,34 +1,45 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { supabase } from '../db.js';
 
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
+
+// Interface estendida para incluir dados do usuário no objeto Request do Express
 export interface AuthRequest extends Request {
     user?: any;
 }
 
-export const authenticateUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const token = req.headers.authorization?.split(' ')[1];
+// Middleware para autenticar o usuário via Token JWT
+export const authenticateUser = (req: AuthRequest, res: Response, next: NextFunction) => {
+    // Captura o token do cabeçalho de autorização
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
 
     if (!token) {
-        res.status(401).json({ message: 'Autenticação necessária' });
-        return;
+        return res.status(401).json({ error: 'Acesso negado. Token não fornecido.' });
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+        // Verifica a validade do token
+        const decoded = jwt.verify(token, JWT_SECRET);
         req.user = decoded;
         next();
     } catch (error) {
-        res.status(401).json({ message: 'Token inválido ou expirado' });
+        return res.status(403).json({ error: 'Token inválido ou expirado.' });
     }
 };
 
+// Middleware para autorizar acesso baseado em cargos (roles)
 export const authorizeRole = (roles: string[]) => {
     return (req: AuthRequest, res: Response, next: NextFunction) => {
-        if (!req.user || !roles.includes(req.user.role)) {
-            res.status(403).json({ message: 'Acesso negado' });
-            return;
+        if (!req.user) {
+            return res.status(401).json({ error: 'Usuário não autenticado.' });
         }
+
+        // Verifica se o cargo do usuário está na lista de permissões da rota
+        if (!roles.includes(req.user.role)) {
+            return res.status(403).json({ error: 'Acesso negado. Permissão insuficiente.' });
+        }
+
         next();
     };
 };

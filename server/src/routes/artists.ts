@@ -7,22 +7,22 @@ import multer from 'multer';
 
 const router = Router();
 
-// Configuração do Multer (em memória para repassar ao Supabase)
+// Configuração do Multer (armazenamento em memória para repasse ao Supabase)
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB
+        fileSize: 5 * 1024 * 1024 // Limite de 5MB por arquivo
     }
 });
 
-// LISTAR todos os artistas
+// LISTAR todos os artistas (Ordenado por nome)
 router.get('/', authenticateUser, async (req: AuthRequest, res: Response) => {
     const { data, error } = await supabase.from('artists').select('*').order('name');
     if (error) return res.status(500).json({ error: error.message });
     res.json(data);
 });
 
-// CRIAR artista
+// CRIAR um novo artista
 router.post('/', authenticateUser, authorizeRole(['admin', 'producer']), async (req: AuthRequest, res: Response) => {
     const { name, logo_url } = req.body;
     const { data, error } = await supabase.from('artists').insert({ name, logo_url }).select().single();
@@ -30,7 +30,7 @@ router.post('/', authenticateUser, authorizeRole(['admin', 'producer']), async (
     res.status(201).json(data);
 });
 
-// ATUALIZAR artista
+// ATUALIZAR dados de um artista existente
 router.put('/:id', authenticateUser, authorizeRole(['admin', 'producer']), async (req: AuthRequest, res: Response) => {
     const { name, logo_url } = req.body;
     const { data, error } = await supabase
@@ -44,14 +44,14 @@ router.put('/:id', authenticateUser, authorizeRole(['admin', 'producer']), async
     res.json(data);
 });
 
-// DELETAR artista
+// DELETAR um artista (Apenas administradores)
 router.delete('/:id', authenticateUser, authorizeRole(['admin']), async (req: AuthRequest, res: Response) => {
     const { error } = await supabase.from('artists').delete().eq('id', req.params.id);
     if (error) return res.status(400).json({ error: error.message });
     res.status(204).send();
 });
 
-// UPLOAD de foto
+// UPLOAD de logo/foto do artista para o Supabase Storage
 router.post('/upload', authenticateUser, authorizeRole(['admin', 'producer']), upload.single('file'), async (req: AuthRequest, res: Response) => {
     if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
 
@@ -61,7 +61,7 @@ router.post('/upload', authenticateUser, authorizeRole(['admin', 'producer']), u
     const filePath = `logos/${fileName}`;
 
     try {
-        // Garantir que o bucket existe (Supabase ignora se já existir)
+        // Garante a existência do bucket no Supabase
         await supabase.storage.createBucket('artist-logos', { public: true });
 
         const { data, error } = await supabase.storage
@@ -73,14 +73,14 @@ router.post('/upload', authenticateUser, authorizeRole(['admin', 'producer']), u
 
         if (error) throw error;
 
-        // Pegar URL Pública
+        // Obtém a URL pública da imagem salva
         const { data: { publicUrl } } = supabase.storage
             .from('artist-logos')
             .getPublicUrl(filePath);
 
         res.json({ url: publicUrl });
     } catch (error: any) {
-        res.status(500).json({ error: error.message || 'Erro no upload para o Supabase Storage' });
+        res.status(500).json({ error: error.message || 'Erro ao realizar upload para o Supabase Storage' });
     }
 });
 

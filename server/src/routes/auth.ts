@@ -1,120 +1,96 @@
 import { Router } from 'express';
-import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { supabase } from '../db.js';
-import { z } from 'zod';
 
 const router = Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
 
-const loginSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(6),
-});
-
-// Registrar (Para configuração inicial ou admin criando usuários)
+// Rota de Registro de Usuário
 router.post('/register', async (req, res) => {
+    const { email, password, name } = req.body;
     try {
-        const { email, password, name, role } = req.body;
-
-        // Verifica se o usuário já existe
-        const { data: existingUser } = await supabase
-            .from('users')
-            .select('*')
-            .eq('email', email)
-            .single();
-
-        if (existingUser) {
-            res.status(400).json({ message: 'Usuário já existe' });
-            return;
-        }
-
+        // Criptografa a senha antes de salvar
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const { data, error } = await supabase
             .from('users')
-            .insert({
-                email,
-                password: hashedPassword,
-                name,
-                role: role || 'viewer'
-            })
-            .select()
-            .single();
+            .insert([{ email, password: hashedPassword, name, role: 'user' }])
+            .select();
 
         if (error) throw error;
-
-        res.status(201).json({ message: 'Usuário criado', user: { id: data.id, email: data.email, role: data.role } });
-    } catch (error) {
-        res.status(500).json({ message: 'Erro no servidor', error });
+        res.status(201).json(data[0]);
+    } catch (error: any) {
+        res.status(400).json({ message: error.message });
     }
 });
 
-// Login
+// Rota de Login
 router.post('/login', async (req, res) => {
+    const { email, password } = req.body;
     try {
-        const { email, password } = loginSchema.parse(req.body);
-
-        const { data: user } = await supabase
+        // Busca o usuário pelo e-mail
+        const { data: user, error } = await supabase
             .from('users')
             .select('*')
             .eq('email', email)
             .single();
 
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            res.status(401).json({ message: 'Credenciais inválidas' });
-            return;
+        if (error || !user) {
+            return res.status(401).json({ message: 'Usuário não encontrado' });
         }
 
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET as string,
-            { expiresIn: '1d' }
-        );
+        // Compara a senha enviada com o hash no banco
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+            return res.status(401).json({ message: 'Senha inválida' });
+        }
 
-        // Em uma app real, definir cookie aqui se usar HttpOnly
-        // res.cookie('token', token, { httpOnly: true, secure: true });
+        // Gera o token JWT para sessões autenticadas
+        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
 
-        res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role, avatar_url: user.avatar_url } });
-    } catch (error) {
-        res.status(400).json({ message: 'Falha no login', error });
+        // Remove a senha do objeto de retorno por segurança
+        const { password: _, ...userWithoutPassword } = user;
+        res.json({ token, user: userWithoutPassword });
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
     }
 });
 
-// Esqueci a senha (Simulado)
+// Rota para iniciar a Recuperação de Senha
 router.post('/forgot-password', async (req, res) => {
+    const { email } = req.body;
     try {
-        const { email } = req.body;
-        const { data: user } = await supabase
+        const { data: user, error } = await supabase
             .from('users')
-            .select('id, name')
+            .select('id, email')
             .eq('email', email)
             .single();
 
-        if (!user) {
-            // Por segurança, não confirmamos se o email existe ou não
-            res.json({ message: 'Se o email existir em nossa base, um link de recuperação será enviado.' });
-            return;
+        if (error || !user) {
+            return res.status(404).json({ message: 'Usuário não encontrado com este e-mail.' });
         }
 
-        // Em produção: Gerar token real, salvar no DB e enviar email
-        // Aqui simulamos retornando uma mensagem de sucesso
+        // Simulação de Token (Email em Base64 para desenvolvimento)
+        const token = Buffer.from(email).toString('base64');
+
         res.json({
-            message: 'Se o email existir em nossa base, um link de recuperação será enviado.',
-            debugToken: Buffer.from(email).toString('base64') // TOKEN SIMULADO (Base64 do email)
+            message: 'E-mail de recuperação enviado com sucesso!',
+            debugToken: token // Apenas para facilitar testes em dev
         });
-    } catch (error) {
-        res.status(500).json({ message: 'Erro ao processar solicitação' });
+    } catch (err: any) {
+        res.status(500).json({ message: 'Erro ao processar solicitação.' });
     }
 });
 
-// Resetar senha
+// Rota para completar a Redefinição de Senha
 router.post('/reset-password', async (req, res) => {
+    const { token, newPassword } = req.body;
     try {
-        const { token, newPassword } = req.body;
-
-        // Decodificar token simulado (Base64)
+        // Decodifica o token para obter o e-mail (simulado)
         const email = Buffer.from(token, 'base64').toString('ascii');
 
+        // Gera novo hash para a nova senha
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         const { error } = await supabase
@@ -124,9 +100,9 @@ router.post('/reset-password', async (req, res) => {
 
         if (error) throw error;
 
-        res.json({ message: 'Senha atualizada com sucesso!' });
-    } catch (error) {
-        res.status(400).json({ message: 'Falha ao resetar senha. Token inválido ou expirado.' });
+        res.json({ message: 'Sua senha foi alterada com sucesso!' });
+    } catch (err: any) {
+        res.status(500).json({ message: 'Token inválido ou erro ao atualizar senha.' });
     }
 });
 

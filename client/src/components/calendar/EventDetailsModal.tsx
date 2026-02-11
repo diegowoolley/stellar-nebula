@@ -16,7 +16,7 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import clsx from 'clsx';
 import { useAuth } from '../../context/AuthContext';
-import axios from 'axios';
+import api from '../../services/api';
 
 interface EventDetailsModalProps {
     isOpen: boolean;
@@ -39,14 +39,14 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
 
         setIsUpdating(true);
         try {
-            await axios.put(`http://localhost:5000/api/events/${event.id}`, {
+            await api.put(`/events/${event.id}`, {
                 status: newStatus
             });
             if (onEventUpdate) onEventUpdate({ ...event, status: newStatus });
             if (onUpdate) onUpdate();
         } catch (error) {
             console.error('Erro ao atualizar status do evento:', error);
-            alert('Falha ao atualizar o status do evento.');
+            alert('Falha ao atualizar o status do evento. Verifique suas permissões.');
         } finally {
             setIsUpdating(false);
         }
@@ -111,7 +111,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
 
                 {/* Print Only Header */}
                 <div className="hidden print:flex flex-col items-center justify-center p-8 border-b-2 border-secondary-100 mb-8">
-                    <h1 className="text-3xl font-black text-secondary-900 tracking-tighter">STELLAR<span className="text-primary-600">NEBULA</span></h1>
+                    <h1 className="text-3xl font-black text-secondary-900 tracking-tighter">DW<span className="text-primary-600">SISTEMAS</span></h1>
                     <p className="text-sm font-bold text-secondary-500 uppercase tracking-[0.2em] mt-2">Relatório Detalhado de Agendamento</p>
                 </div>
 
@@ -247,7 +247,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
 
                 {/* Print Only Footer */}
                 <div className="hidden print:block text-center mt-12 pt-8 border-t border-secondary-100 text-[10px] text-secondary-400">
-                    Relatório gerado automaticamente pelo sistema Stellar Nebula em {format(new Date(), "dd/MM/yyyy HH:mm:ss")}.
+                    Relatório gerado automaticamente pelo sistema Dw Sistemas em {format(new Date(), "dd/MM/yyyy HH:mm:ss")}.
                 </div>
             </div>
 
@@ -267,10 +267,15 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                         box-shadow: none !important;
                         margin: 0 !important;
                         padding: 0 !important;
+                        background: white !important;
+                        color: black !important;
                     }
                     .relative.w-full.max-w-2xl * { visibility: visible !important; }
                     .fixed.inset-0 { position: static !important; }
                     .bg-secondary-900/60 { display: none !important; }
+                    .text-\[var\(--text-main\)\] { color: black !important; }
+                    .text-\[var\(--text-muted\)\] { color: #666 !important; }
+                    .border-\[var\(--border-main\)\] { border-color: #eee !important; }
                 }
             `}</style>
         </div>

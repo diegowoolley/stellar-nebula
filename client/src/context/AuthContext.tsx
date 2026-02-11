@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
 
 interface User {
     id: string;
@@ -34,19 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (storedToken && storedUser) {
             setToken(storedToken);
             setUser(JSON.parse(storedUser));
-            // Configurar cabeçalho padrão do axios
-            axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-
-            // Sincronizar dados do usuário com o servidor (ex: avatar novo)
-            axios.get('http://localhost:5000/api/users/me')
-                .then(res => {
-                    setUser(res.data);
-                    localStorage.setItem('user', JSON.stringify(res.data));
-                })
-                .catch(() => {
-                    // Se o token for inválido, limpa tudo
-                    // logout(); 
-                });
+            // O interceptador em api.ts cuidará do header Authorization
         }
         setIsLoading(false);
     }, []);
@@ -57,7 +44,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(newUser);
         localStorage.setItem('token', newToken);
         localStorage.setItem('user', JSON.stringify(newUser));
-        axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
     };
 
     // Função de logout
@@ -66,7 +52,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        delete axios.defaults.headers.common['Authorization'];
     };
 
     return (

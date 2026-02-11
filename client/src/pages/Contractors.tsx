@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { Briefcase, Search, Plus, Mail, Phone, X, Save, Edit2, Trash2, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { maskPhone } from '../utils/format';
+import api from '../services/api';
 import clsx from 'clsx';
 
 interface Contractor {
@@ -33,7 +33,7 @@ export const Contractors = () => {
     const fetchContractors = async () => {
         setIsLoading(true);
         try {
-            const res = await axios.get('http://localhost:5000/api/contractors');
+            const res = await api.get('/contractors');
             setContractors(res.data);
         } catch (error) {
             console.error(error);
@@ -64,9 +64,9 @@ export const Contractors = () => {
         setIsSubmitting(true);
         try {
             if (editingContractor) {
-                await axios.put(`http://localhost:5000/api/contractors/${editingContractor.id}`, formData);
+                await api.put(`/contractors/${editingContractor.id}`, formData);
             } else {
-                await axios.post('http://localhost:5000/api/contractors', formData);
+                await api.post('/contractors', formData);
             }
             fetchContractors();
             setIsSidebarOpen(false);
@@ -82,7 +82,7 @@ export const Contractors = () => {
     const handleDelete = async (id: string) => {
         if (!confirm('Excluir este contratante permanentemente?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/contractors/${id}`);
+            await api.delete(`/contractors/${id}`);
             fetchContractors();
         } catch (error) {
             alert('Erro ao excluir contratante.');
