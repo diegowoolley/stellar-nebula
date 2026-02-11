@@ -1,0 +1,25 @@
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const supabaseUrl = process.env.SUPABASE_URL;
+// Tenta usar a Service Key primeiro (para operações backend com privilégios),
+// caso contrário usa a chave pública (que respeita RLS)
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+    console.error('URL ou Chave do Supabase ausente no arquivo .env');
+    // Não lançamos erro aqui para permitir que o servidor inicie mesmo sem as chaves,
+    // mas as operações de DB falharão.
+}
+
+// Opções para o cliente backend
+const options = {
+    auth: {
+        autoRefreshToken: false,
+        persistSession: false
+    }
+};
+
+export const supabase = createClient(supabaseUrl || '', supabaseKey || '', options);
