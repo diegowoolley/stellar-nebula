@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { API_URL } from '../config/api';
 
 export const ForgotPassword = () => {
     const [email, setEmail] = useState('');
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [message, setMessage] = useState('');
-    const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setStatus('loading');
         try {
-            const response = await axios.post('http://localhost:5000/api/auth/forgot-password', { email });
+            const response = await axios.post(`${API_URL}/auth/forgot-password`, { email });
             setMessage(response.data.message);
             setStatus('success');
 

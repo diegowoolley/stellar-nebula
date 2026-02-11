@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import {
     Users, Truck, Info, Clock,
     Save, X, FileText, Upload,
@@ -77,8 +77,8 @@ export const NewEvent = () => {
         const fetchData = async () => {
             try {
                 const [artistsRes, contractorsRes] = await Promise.all([
-                    axios.get('http://localhost:5000/api/artists'),
-                    axios.get('http://localhost:5000/api/contractors')
+                    api.get('/artists'),
+                    api.get('/contractors')
                 ]);
                 setArtists(artistsRes.data);
                 setContractors(contractorsRes.data);
@@ -98,7 +98,7 @@ export const NewEvent = () => {
         fData.append('file', file);
 
         try {
-            const res = await axios.post('http://localhost:5000/api/events/upload-contract', fData, {
+            const res = await api.post('/events/upload-contract', fData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setFormData(prev => ({ ...prev, contract_url: res.data.url }));
@@ -125,7 +125,7 @@ export const NewEvent = () => {
 
         setIsSubmitting(true);
         try {
-            await axios.post('http://localhost:5000/api/events', formData);
+            await api.post('/events', formData);
             navigate('/calendar');
         } catch (error: any) {
             alert(error.response?.data?.error || 'Erro ao criar evento.');

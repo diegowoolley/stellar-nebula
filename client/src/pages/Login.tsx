@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { LogIn, User, Lock, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { API_URL } from '../config/api';
 
 export const Login = () => {
     // Estados para armazenar credenciais, erros e carregamento
@@ -22,7 +23,7 @@ export const Login = () => {
         setIsLoading(true);
         try {
             // Tenta fazer login na API
-            const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+            const response = await axios.post(`${API_URL}/auth/login`, { email, password });
             // Salva token e usuário no contexto
             login(response.data.token, response.data.user);
             navigate('/');

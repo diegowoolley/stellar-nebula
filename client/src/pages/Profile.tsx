@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
 import { User, Mail, Shield, Save, Camera, CheckCircle } from 'lucide-react';
+import api from '../services/api';
 
 const Profile = () => {
     const { user, login } = useAuth();
@@ -24,7 +24,7 @@ const Profile = () => {
         uploadFormData.append('file', file);
 
         try {
-            const res = await axios.post('http://localhost:5000/api/users/upload-avatar', uploadFormData, {
+            const res = await api.post('/users/upload-avatar', uploadFormData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setFormData(prev => ({ ...prev, avatar_url: res.data.url }));
@@ -48,7 +48,7 @@ const Profile = () => {
         setMessage({ type: '', text: '' });
 
         try {
-            const res = await axios.put(`http://localhost:5000/api/users/${user?.id}`, formData);
+            const res = await api.put(`/users/${user?.id}`, formData);
             // Atualiza o contexto de auth com os novos dados
             const token = localStorage.getItem('token');
             if (token) {

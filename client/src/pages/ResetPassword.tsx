@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { Lock, Key, CheckCircle2, AlertCircle } from 'lucide-react';
+import { API_URL } from '../config/api';
 
 export const ResetPassword = () => {
     // Parâmetros de busca para capturar o token da URL
@@ -36,7 +37,7 @@ export const ResetPassword = () => {
 
         setStatus('loading');
         try {
-            const response = await axios.post('http://localhost:5000/api/auth/reset-password', {
+            const response = await axios.post(`${API_URL}/auth/reset-password`, {
                 token,
                 newPassword: password
             });

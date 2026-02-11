@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { maskPhone } from '../utils/format';
 import clsx from 'clsx';
+import { API_URL } from '../config/api';
 
 export const ExternalRequest = () => {
     const { contractorId } = useParams();
@@ -72,8 +73,8 @@ export const ExternalRequest = () => {
         const fetchData = async () => {
             try {
                 const [artistsRes, contractorRes] = await Promise.all([
-                    axios.get('http://localhost:5000/api/public/artists'),
-                    axios.get(`http://localhost:5000/api/public/contractor/${contractorId}`)
+                    axios.get(`${API_URL}/public/artists`),
+                    axios.get(`${API_URL}/public/contractor/${contractorId}`)
                 ]);
                 setArtists(artistsRes.data);
                 setContractor(contractorRes.data);
@@ -94,7 +95,7 @@ export const ExternalRequest = () => {
 
         setIsSubmitting(true);
         try {
-            await axios.post('http://localhost:5000/api/public/event', {
+            await axios.post(`${API_URL}/public/event`, {
                 ...formData,
                 contractor_id: contractorId
             });

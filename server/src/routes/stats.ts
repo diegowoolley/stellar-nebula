@@ -76,11 +76,20 @@ router.get('/', authenticateUser, async (req: AuthRequest, res: Response) => {
 
         events.forEach(event => {
             if (event.artists && event.artist_id) {
-                const artistName = event.artists.name;
-                if (!artistShowCount[event.artist_id]) {
-                    artistShowCount[event.artist_id] = { name: artistName, count: 0 };
+                const artistName = (event.artists as any)?.name || 'Sem artista';
+
+                const artistId = event.artist_id;
+
+                if (!artistShowCount[artistId]) {
+                    artistShowCount[artistId] = {
+                        name: artistName,
+                        count: 0
+                    };
                 }
-                artistShowCount[event.artist_id].count++;
+
+                artistShowCount[artistId]!.count++;
+
+
             }
         });
 
@@ -109,7 +118,7 @@ router.get('/', authenticateUser, async (req: AuthRequest, res: Response) => {
             .slice(0, 5)
             .map(event => ({
                 id: event.id,
-                artist: event.artists?.name || 'Sem artista',
+                artist: (event.artists as any)?.name || 'Sem artista',
                 city: event.city,
                 state: event.state,
                 date: event.date,
