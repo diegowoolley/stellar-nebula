@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import type { Response } from 'express';
+import type { Response, Request } from 'express';
 import { supabase } from '../db.js';
 import jwt from 'jsonwebtoken';
 import { authenticateUser, authorizeRole } from '../middleware/auth.js';
@@ -44,7 +44,7 @@ router.delete('/:id', authenticateUser, authorizeRole(['admin']), async (req: Au
 });
 
 // GERAR LINK com token (JWT 24h)
-router.post('/:id/link', async (req: Request, res: Response) => {
+router.post('/:id/link', async (req: Request<{ id: string }>, res: Response) => {
     const { id } = req.params;
 
     // Verificar se contratante existe

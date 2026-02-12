@@ -21,12 +21,12 @@ router.get('/contractor/:id', async (req: Request, res: Response) => {
 });
 
 // VALIDAR TOKEN e retornar dados do contratante (Substitui o acesso direto por ID)
-router.get('/validate-link/:token', async (req: Request, res: Response) => {
+router.get('/validate-link/:token', async (req: Request<{ token: string }>, res: Response) => {
     const { token } = req.params;
     const secret = process.env.JWT_SECRET || 'secret_super_secreto_mudeme';
 
     try {
-        const decoded = jwt.verify(token, secret) as { contractorId: string };
+        const decoded = jwt.verify(token, secret) as unknown as { contractorId: string };
 
         // Se válido, buscar dados do contratante
         const { data, error } = await supabase.from('contractors').select('id, name').eq('id', decoded.contractorId).single();
