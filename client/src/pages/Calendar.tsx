@@ -28,10 +28,10 @@ import {
     isSameMonth,
     isSameDay,
     eachDayOfInterval,
-    eachDayOfInterval,
     parseISO,
     startOfDay,
     isBefore
+} from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { EventDetailsModal } from '../components/calendar/EventDetailsModal';
 import api from '../services/api';
@@ -491,122 +491,121 @@ export const Calendar = () => {
                                             </button>
                                         )}
                                     </div>
-                                </div>
 
-                                    {/* Lista de Eventos ou Placeholder */ }
-                            <div className="space-y-3 pl-4 border-l-2 border-[var(--border-main)] ml-3">
-                                {dayEvents.length === 0 ? (
-                                    <div onClick={() => !isBefore(day, startOfDay(new Date())) && navigate('/events/new', { state: { initialDate: day.toISOString() } })} className={clsx("py-4 px-3 rounded-xl border border-dashed border-[var(--border-main)] text-[var(--text-muted)] text-xs font-medium flex items-center justify-center transition-colors opacity-60", !isBefore(day, startOfDay(new Date())) ? "cursor-pointer hover:bg-[var(--bg-sidebar)] hover:opacity-100" : "cursor-not-allowed")}>
-                                        {isBefore(day, startOfDay(new Date())) ? "Data passada" : "Toque para adicionar evento"}
-                                    </div>
-                                ) : (
-                                    dayEvents.map(event => (
-                                        <div
-                                            key={event.id}
-                                            onClick={() => handleEventClick(event)}
-                                            className={clsx(
-                                                "bg-[var(--bg-sidebar)] rounded-xl border border-[var(--border-main)] shadow-sm p-3 active:scale-[0.98] transition-all relative overflow-hidden group/mobile-card",
-                                                event.status === 'cancelled' && "opacity-60 grayscale"
-                                            )}
-                                        >
-                                            <div className={clsx(
-                                                "absolute left-0 top-0 bottom-0 w-1",
-                                                event.status === 'confirmed' ? "bg-green-500" :
-                                                    event.status === 'pending' ? "bg-yellow-500" :
-                                                        "bg-red-500"
-                                            )}></div>
-
-                                            <div className="ml-2 flex justify-between items-start">
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center space-x-2 mb-1">
-                                                        <span className="text-xs font-black text-[var(--text-muted)] uppercase">{format(parseISO(event.date), 'HH:mm')}</span>
-                                                        <h4 className="text-sm font-bold text-[var(--text-main)] truncate">{event.artists?.name}</h4>
-                                                    </div>
-                                                    <div className="flex items-center text-[11px] text-[var(--text-muted)] font-medium">
-                                                        <MapPin size={10} className="mr-1" />
-                                                        <span className="truncate">{event.venue_name || event.city}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-2">
-                                                    {/* Mobile Quick Actions */}
-                                                    {/* Mobile Quick Actions - Only if not in past */}
-                                                    {(user?.role === 'admin' || user?.role === 'producer') && !isBefore(parseISO(event.date), startOfDay(new Date())) && (
-                                                        <div className="flex items-center space-x-2 mr-2">
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    navigate('/events/new', { state: { initialDate: event.date } });
-                                                                }}
-                                                                className="p-1.5 bg-primary-50 text-primary-600 rounded-full"
-                                                                title="Novo Evento"
-                                                            >
-                                                                <Plus size={12} />
-                                                            </button>
-                                                            <button
-                                                                onClick={(e) => handleEditClick(e, event.id)}
-                                                                className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-[var(--text-main)]"
-                                                            >
-                                                                <Edit2 size={12} />
-                                                            </button>
-                                                            {event.status !== 'confirmed' && (
-                                                                <button
-                                                                    onClick={(e) => handleStatusUpdate(e, event.id, 'confirmed')}
-                                                                    className="p-1.5 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full"
-                                                                >
-                                                                    <Check size={12} />
-                                                                </button>
-                                                            )}
-                                                            {event.status !== 'cancelled' && (
-                                                                <button
-                                                                    onClick={(e) => handleStatusUpdate(e, event.id, 'cancelled')}
-                                                                    className="p-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-full"
-                                                                >
-                                                                    <X size={12} />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    )}
-
-                                                    {event.artists?.logo_url && (
-                                                        <div className="w-8 h-8 rounded-full bg-[var(--bg-main)] overflow-hidden border border-[var(--border-main)] flex-shrink-0">
-                                                            <img src={event.artists.logo_url} alt="" className="w-full h-full object-cover" />
-                                                        </div>
-                                                    )}
-                                                </div>
+                                    {/* Lista de Eventos ou Placeholder */}
+                                    <div className="space-y-3 pl-4 border-l-2 border-[var(--border-main)] ml-3">
+                                        {dayEvents.length === 0 ? (
+                                            <div onClick={() => !isBefore(day, startOfDay(new Date())) && navigate('/events/new', { state: { initialDate: day.toISOString() } })} className={clsx("py-4 px-3 rounded-xl border border-dashed border-[var(--border-main)] text-[var(--text-muted)] text-xs font-medium flex items-center justify-center transition-colors opacity-60", !isBefore(day, startOfDay(new Date())) ? "cursor-pointer hover:bg-[var(--bg-sidebar)] hover:opacity-100" : "cursor-not-allowed")}>
+                                                {isBefore(day, startOfDay(new Date())) ? "Data passada" : "Toque para adicionar evento"}
                                             </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
+                                        ) : (
+                                            dayEvents.map(event => (
+                                                <div
+                                                    key={event.id}
+                                                    onClick={() => handleEventClick(event)}
+                                                    className={clsx(
+                                                        "bg-[var(--bg-sidebar)] rounded-xl border border-[var(--border-main)] shadow-sm p-3 active:scale-[0.98] transition-all relative overflow-hidden group/mobile-card",
+                                                        event.status === 'cancelled' && "opacity-60 grayscale"
+                                                    )}
+                                                >
+                                                    <div className={clsx(
+                                                        "absolute left-0 top-0 bottom-0 w-1",
+                                                        event.status === 'confirmed' ? "bg-green-500" :
+                                                            event.status === 'pending' ? "bg-yellow-500" :
+                                                                "bg-red-500"
+                                                    )}></div>
+
+                                                    <div className="ml-2 flex justify-between items-start">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center space-x-2 mb-1">
+                                                                <span className="text-xs font-black text-[var(--text-muted)] uppercase">{format(parseISO(event.date), 'HH:mm')}</span>
+                                                                <h4 className="text-sm font-bold text-[var(--text-main)] truncate">{event.artists?.name}</h4>
+                                                            </div>
+                                                            <div className="flex items-center text-[11px] text-[var(--text-muted)] font-medium">
+                                                                <MapPin size={10} className="mr-1" />
+                                                                <span className="truncate">{event.venue_name || event.city}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-2">
+                                                            {/* Mobile Quick Actions */}
+                                                            {/* Mobile Quick Actions - Only if not in past */}
+                                                            {(user?.role === 'admin' || user?.role === 'producer') && !isBefore(parseISO(event.date), startOfDay(new Date())) && (
+                                                                <div className="flex items-center space-x-2 mr-2">
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            navigate('/events/new', { state: { initialDate: event.date } });
+                                                                        }}
+                                                                        className="p-1.5 bg-primary-50 text-primary-600 rounded-full"
+                                                                        title="Novo Evento"
+                                                                    >
+                                                                        <Plus size={12} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={(e) => handleEditClick(e, event.id)}
+                                                                        className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-[var(--text-main)]"
+                                                                    >
+                                                                        <Edit2 size={12} />
+                                                                    </button>
+                                                                    {event.status !== 'confirmed' && (
+                                                                        <button
+                                                                            onClick={(e) => handleStatusUpdate(e, event.id, 'confirmed')}
+                                                                            className="p-1.5 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full"
+                                                                        >
+                                                                            <Check size={12} />
+                                                                        </button>
+                                                                    )}
+                                                                    {event.status !== 'cancelled' && (
+                                                                        <button
+                                                                            onClick={(e) => handleStatusUpdate(e, event.id, 'cancelled')}
+                                                                            className="p-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-full"
+                                                                        >
+                                                                            <X size={12} />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            )}
+
+                                                            {event.artists?.logo_url && (
+                                                                <div className="w-8 h-8 rounded-full bg-[var(--bg-main)] overflow-hidden border border-[var(--border-main)] flex-shrink-0">
+                                                                    <img src={event.artists.logo_url} alt="" className="w-full h-full object-cover" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
                                 </div>
-                );
+                            );
                         })}
 
-                {calendarDays.filter(day => isSameMonth(day, currentMonth)).length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <CalendarIcon size={48} className="text-[var(--text-muted)] opacity-20 mb-4" />
-                        <p className="text-[var(--text-main)] font-black">Mês vazio</p>
-                    </div>
-                )}
-            </div>
+                    {calendarDays.filter(day => isSameMonth(day, currentMonth)).length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                            <CalendarIcon size={48} className="text-[var(--text-muted)] opacity-20 mb-4" />
+                            <p className="text-[var(--text-main)] font-black">Mês vazio</p>
+                        </div>
+                    )}
+                </div>
 
-            {/* Legenda de Cores de Status no Rodapé */}
-            <div className="p-4 bg-[var(--bg-main)]/50 border-t border-[var(--border-main)] flex flex-wrap items-center justify-center gap-6">
-                <div className="flex items-center space-x-2">
-                    <div className="w-2.5 h-2.5 bg-green-500 rounded-full shadow-md"></div>
-                    <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] opacity-80">Confirmado</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full shadow-md"></div>
-                    <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] opacity-80">Pendente/Reserva</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <div className="w-2.5 h-2.5 bg-red-500 rounded-full shadow-md"></div>
-                    <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] opacity-80">Cancelado</span>
+                {/* Legenda de Cores de Status no Rodapé */}
+                <div className="p-4 bg-[var(--bg-main)]/50 border-t border-[var(--border-main)] flex flex-wrap items-center justify-center gap-6">
+                    <div className="flex items-center space-x-2">
+                        <div className="w-2.5 h-2.5 bg-green-500 rounded-full shadow-md"></div>
+                        <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] opacity-80">Confirmado</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full shadow-md"></div>
+                        <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] opacity-80">Pendente/Reserva</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <div className="w-2.5 h-2.5 bg-red-500 rounded-full shadow-md"></div>
+                        <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] opacity-80">Cancelado</span>
+                    </div>
                 </div>
             </div>
         </div>
-        </div >
     );
 };
