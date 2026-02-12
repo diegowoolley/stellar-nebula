@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import type { Response, Request } from 'express';
 import { supabase } from '../db.js';
+import jwt from 'jsonwebtoken';
 
 const router = Router();
 
@@ -17,6 +18,25 @@ router.get('/contractor/:id', async (req: Request, res: Response) => {
     const { data, error } = await supabase.from('contractors').select('id, name').eq('id', id).single();
     if (error) return res.status(404).json({ error: 'Contratante não encontrado' });
     res.json(data);
+});
+
+// VALIDAR TOKEN e retornar dados do contratante (Substitui o acesso direto por ID)
+router.get('/validate-link/:token', async (req: Request, res: Response) => {
+    const { token } = req.params;
+    const secret = process.env.JWT_SECRET || 'secret_super_secreto_mudeme';
+
+    try {
+        const decoded = jwt.verify(token, secret) as { contractorId: string };
+
+        // Se válido, buscar dados do contratante
+        const { data, error } = await supabase.from('contractors').select('id, name').eq('id', decoded.contractorId).single();
+
+        if (error || !data) return res.status(404).json({ error: 'Contratante não encontrado' });
+
+        res.json(data);
+    } catch (err) {
+        return res.status(401).json({ error: 'Link expirado ou inválido.' });
+    }
 });
 
 // CRIAR solicitação de evento (público)

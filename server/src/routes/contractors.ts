@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import type { Response } from 'express';
 import { supabase } from '../db.js';
+import jwt from 'jsonwebtoken';
 import { authenticateUser, authorizeRole } from '../middleware/auth.js';
 import type { AuthRequest } from '../middleware/auth.js';
 
@@ -40,6 +41,23 @@ router.delete('/:id', authenticateUser, authorizeRole(['admin']), async (req: Au
     const { error } = await supabase.from('contractors').delete().eq('id', req.params.id);
     if (error) return res.status(400).json({ error: error.message });
     res.status(204).send();
+});
+
+// GERAR LINK com token (JWT 24h)
+router.post('/:id/link', async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    // Verificar se contratante existe
+    const { data, error } = await supabase.from('contractors').select('id, name').eq('id', id).single();
+    if (error || !data) return res.status(404).json({ error: 'Contratante não encontrado' });
+
+    // Gerar token
+    const secret = process.env.JWT_SECRET || 'secret_super_secreto_mudeme';
+    const token = jwt.sign({ contractorId: id }, secret, { expiresIn: '24h' });
+
+    // Retornar link frontal (opcional, pode retornar só o token)
+    // Front deve montar: origin + /external-request/ + token
+    res.json({ token });
 });
 
 export default router;

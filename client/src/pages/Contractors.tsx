@@ -89,20 +89,29 @@ export const Contractors = () => {
         }
     };
 
-    const handleShareWhatsApp = (contractor: Contractor) => {
-        const baseUrl = window.location.origin;
-        const link = `${baseUrl}/external-request/${contractor.id}`;
-        const text = `Olá ${contractor.name}, por favor preencha os dados do evento através deste link: ${link}`;
-        const encodedText = encodeURIComponent(text);
+    const handleShareWhatsApp = async (contractor: Contractor) => {
+        try {
+            // Obter token do backend
+            const { data } = await api.post(`/contractors/${contractor.id}/link`);
+            const token = data.token;
 
-        let digits = contractor.phone?.replace(/\D/g, '') || '';
+            const baseUrl = window.location.origin;
+            const link = `${baseUrl}/external-request/${token}`;
+            const text = `Olá ${contractor.name}, por favor preencha os dados do evento através deste link (Válido por 24h): ${link}`;
+            const encodedText = encodeURIComponent(text);
 
-        // Adiciona 55 (Brasil) se o número tiver apenas 10 ou 11 dígitos (DDD + número)
-        if (digits.length === 10 || digits.length === 11) {
-            digits = '55' + digits;
+            let digits = contractor.phone?.replace(/\D/g, '') || '';
+
+            // Adiciona 55 (Brasil) se o número tiver apenas 10 ou 11 dígitos (DDD + número)
+            if (digits.length === 10 || digits.length === 11) {
+                digits = '55' + digits;
+            }
+
+            window.open(`https://wa.me/${digits}?text=${encodedText}`, '_blank');
+        } catch (error) {
+            alert('Erro ao gerar link de compartilhamento.');
+            console.error(error);
         }
-
-        window.open(`https://wa.me/${digits}?text=${encodedText}`, '_blank');
     };
 
     return (

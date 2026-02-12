@@ -23,7 +23,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/external-request/:contractorId" element={<ExternalRequest />} />
+            <Route path="/external-request/:token" element={<ExternalRequest />} />
             <Route element={<AppLayout />}>
               <Route path="/" element={<Calendar />} />
               <Route path="/dashboard" element={<Dashboard />} />

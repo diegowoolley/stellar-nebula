@@ -35,7 +35,7 @@ const InputField = ({ label, value, onChange, placeholder, type = "text", requir
 };
 
 export const ExternalRequest = () => {
-    const { contractorId } = useParams();
+    const { token } = useParams();
     const [activeTab, setActiveTab] = useState('info');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -45,7 +45,7 @@ export const ExternalRequest = () => {
 
     const [formData, setFormData] = useState({
         artist_id: '',
-        contractor_id: contractorId,
+        contractor_id: '',
         date: '',
         city: '',
         state: '',
@@ -96,20 +96,25 @@ export const ExternalRequest = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [artistsRes, contractorRes] = await Promise.all([
-                    axios.get(`${API_URL}/public/artists`),
-                    axios.get(`${API_URL}/public/contractor/${contractorId}`)
-                ]);
+                // Validar token e buscar dados do contratante
+                const contractorRes = await axios.get(`${API_URL}/public/validate-link/${token}`);
+                const contractorData = contractorRes.data;
+
+                setContractor(contractorData);
+                setFormData(prev => ({ ...prev, contractor_id: contractorData.id }));
+
+                // Buscar artistas
+                const artistsRes = await axios.get(`${API_URL}/public/artists`);
                 setArtists(artistsRes.data);
-                setContractor(contractorRes.data);
             } catch (error) {
-                console.error('Erro ao buscar dados:', error);
+                console.error('Erro ao buscar dados ou link expirado:', error);
+                setContractor(null); // Garante que mostre erro se falhar
             } finally {
                 setLoading(false);
             }
         };
         fetchData();
-    }, [contractorId]);
+    }, [token]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -121,7 +126,7 @@ export const ExternalRequest = () => {
         try {
             await axios.post(`${API_URL}/public/event`, {
                 ...formData,
-                contractor_id: contractorId
+                // contractor_id já está no state
             });
             setIsSubmitted(true);
         } catch (error: any) {
@@ -167,12 +172,7 @@ export const ExternalRequest = () => {
                 <p className="text-[var(--text-muted)] mb-6">
                     Obrigado, <strong>{contractor.name}</strong>. Os dados do evento para <strong>{artists.find(a => a.id === formData.artist_id)?.name}</strong> foram recebidos e estão em análise.
                 </p>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="w-full btn-primary"
-                >
-                    Enviar outra solicitação
-                </button>
+
             </div>
         </div>
     );
@@ -272,6 +272,7 @@ export const ExternalRequest = () => {
                                                 label={key.replace(/_/g, ' ')}
                                                 value={(formData.details_contacts as any)[key]}
                                                 onChange={(v: any) => setFormData({ ...formData, details_contacts: { ...formData.details_contacts, [key]: v } })}
+                                                placeholder="Nome / Telefone"
                                             />
                                         ))}
                                     </div>
