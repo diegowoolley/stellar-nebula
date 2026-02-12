@@ -55,14 +55,24 @@ export const AppLayout = () => {
                 .on(
                     'postgres_changes',
                     { event: 'INSERT', schema: 'public', table: 'events' },
-                    () => {
+                    (payload) => {
+                        console.log('Realtime INSERT received:', payload);
                         fetchPendingEvents();
                     }
                 )
                 .on(
                     'postgres_changes',
                     { event: 'UPDATE', schema: 'public', table: 'events' },
-                    () => {
+                    (payload) => {
+                        console.log('Realtime UPDATE received:', payload);
+                        fetchPendingEvents();
+                    }
+                )
+                .on(
+                    'postgres_changes',
+                    { event: 'DELETE', schema: 'public', table: 'events' },
+                    (payload) => {
+                        console.log('Realtime DELETE received:', payload);
                         fetchPendingEvents();
                     }
                 )
