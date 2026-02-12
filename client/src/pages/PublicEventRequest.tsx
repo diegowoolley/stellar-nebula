@@ -10,6 +10,30 @@ import { maskPhone } from '../utils/format';
 import clsx from 'clsx';
 import { API_URL } from '../config/api';
 
+const InputField = ({ label, value, onChange, placeholder, type = "text", required = false }: any) => {
+    const handleChange = (val: string) => {
+        if (label?.toLowerCase().includes('telefone') || placeholder?.toLowerCase().includes('telefone') || label?.toLowerCase().includes('contato')) {
+            onChange(maskPhone(val));
+        } else {
+            onChange(val);
+        }
+    };
+
+    return (
+        <div className="space-y-1 flex-1">
+            {label && <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">{label}</label>}
+            <input
+                type={type}
+                required={required}
+                placeholder={placeholder}
+                value={value}
+                onChange={(e) => handleChange(e.target.value)}
+                className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-sm text-[var(--text-main)] placeholder:opacity-40"
+            />
+        </div>
+    );
+};
+
 export const ExternalRequest = () => {
     const { contractorId } = useParams();
     const [activeTab, setActiveTab] = useState('info');
@@ -116,29 +140,7 @@ export const ExternalRequest = () => {
         { id: 'lineup', label: 'Line-up', icon: Clock },
     ];
 
-    const InputField = ({ label, value, onChange, placeholder, type = "text", required = false }: any) => {
-        const handleChange = (val: string) => {
-            if (label?.toLowerCase().includes('telefone') || placeholder?.toLowerCase().includes('telefone') || label?.toLowerCase().includes('contato')) {
-                onChange(maskPhone(val));
-            } else {
-                onChange(val);
-            }
-        };
 
-        return (
-            <div className="space-y-1 flex-1">
-                {label && <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">{label}</label>}
-                <input
-                    type={type}
-                    required={required}
-                    placeholder={placeholder}
-                    value={value}
-                    onChange={(e) => handleChange(e.target.value)}
-                    className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-sm text-[var(--text-main)] placeholder:opacity-40"
-                />
-            </div>
-        );
-    };
 
     if (loading) return (
         <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center p-4">
