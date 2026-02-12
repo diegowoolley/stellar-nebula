@@ -237,7 +237,19 @@ export const ExternalRequest = () => {
                                         <InputField label="Local (Ex: Estádio, Clube)" value={formData.venue_name} onChange={(val: any) => setFormData({ ...formData, venue_name: val })} />
                                         <div className="grid grid-cols-4 gap-2">
                                             <div className="col-span-3"><InputField label="Cidade" value={formData.city} onChange={(val: any) => setFormData({ ...formData, city: val })} /></div>
-                                            <InputField label="UF" value={formData.state} onChange={(val: any) => setFormData({ ...formData, state: val })} />
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">UF</label>
+                                                <select
+                                                    value={formData.state}
+                                                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                                                    className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-sm text-[var(--text-main)] appearance-none"
+                                                >
+                                                    <option value="">UF</option>
+                                                    {['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'].map(uf => (
+                                                        <option key={uf} value={uf}>{uf}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="p-3 bg-primary-500/5 border border-primary-500/10 rounded-lg text-[11px] text-primary-600 font-medium">
