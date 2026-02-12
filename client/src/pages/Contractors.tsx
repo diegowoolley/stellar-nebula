@@ -141,12 +141,12 @@ export const Contractors = () => {
                         <div className="text-center py-8 text-sm text-[var(--text-muted)] animate-pulse">Carregando contratantes...</div>
                     ) : contractors.length === 0 ? (
                         <div className="text-center py-12">
-                            <Briefcase size={32} className="mx-auto text-secondary-200 mb-2" />
-                            <p className="text-secondary-900 font-bold text-sm">Nenhum contratante encontrado</p>
+                            <Briefcase size={32} className="mx-auto text-[var(--text-muted)] mb-2" />
+                            <p className="text-[var(--text-main)] font-bold text-sm">Nenhum contratante encontrado</p>
                         </div>
                     ) : (
                         contractors.map((c) => (
-                            <div key={c.id} className="bg-white p-4 rounded-xl border border-secondary-200 shadow-sm space-y-4 hover:border-primary-200 transition-colors">
+                            <div key={c.id} className="bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--border-main)] shadow-sm space-y-4 hover:border-primary-500/50 transition-colors">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center">
                                         <div className="w-10 h-10 rounded bg-primary-500/10 text-primary-600 flex items-center justify-center font-bold text-sm mr-3 border border-primary-500/20 shadow-sm uppercase">
@@ -175,7 +175,7 @@ export const Contractors = () => {
                                         )}
                                     </div>
                                 </div>
-                                <div className="pt-3 border-t border-secondary-50 space-y-2">
+                                <div className="pt-3 border-t border-[var(--border-main)] space-y-2">
                                     {c.email && (
                                         <div className="flex items-center text-xs text-[var(--text-muted)]">
                                             <Mail size={14} className="mr-2 opacity-60" /> {c.email}
@@ -191,9 +191,10 @@ export const Contractors = () => {
                                     <div className="pt-2 flex justify-end">
                                         <button
                                             onClick={() => handleDelete(c.id)}
-                                            className="text-[10px] font-bold text-red-400 hover:text-red-600 uppercase tracking-widest px-2 py-1"
+                                            className="p-2 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                                            title="Excluir contratante"
                                         >
-                                            Excluir Registro
+                                            <Trash2 size={18} />
                                         </button>
                                     </div>
                                 )}
@@ -220,13 +221,13 @@ export const Contractors = () => {
                             ) : contractors.length === 0 ? (
                                 <tr>
                                     <td className="px-6 py-12 text-center" colSpan={3}>
-                                        <Briefcase size={32} className="mx-auto text-secondary-200 mb-3" />
-                                        <p className="text-secondary-900 font-bold text-sm">Nenhum contratante encontrado</p>
+                                        <Briefcase size={32} className="mx-auto text-[var(--text-muted)] mb-3" />
+                                        <p className="text-[var(--text-main)] font-bold text-sm">Nenhum contratante encontrado</p>
                                     </td>
                                 </tr>
                             ) : (
                                 contractors.map((c) => (
-                                    <tr key={c.id} className="hover:bg-secondary-50 transition-colors">
+                                    <tr key={c.id} className="hover:bg-[var(--bg-main)] transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center">
                                                 <div className="w-9 h-9 rounded bg-primary-500/10 text-primary-600 flex items-center justify-center font-bold text-xs mr-3 border border-primary-500/20 shadow-sm uppercase">

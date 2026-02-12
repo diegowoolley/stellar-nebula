@@ -33,7 +33,7 @@ export const AppLayout = () => {
 
     // Definição dos itens de navegação lateral
     const navigation = [
-        { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'Agenda', href: '/calendar', icon: Calendar },
         { name: 'Artistas', href: '/artists', icon: Users },
         { name: 'Contratantes', href: '/contractors', icon: Briefcase },

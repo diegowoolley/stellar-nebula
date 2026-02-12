@@ -25,13 +25,15 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/external-request/:contractorId" element={<ExternalRequest />} />
             <Route element={<AppLayout />}>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/" element={<Calendar />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/artists" element={<Artists />} />
               <Route path="/contractors" element={<Contractors />} />
               <Route path="/users" element={<Users />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/events/new" element={<NewEvent />} />
+              <Route path="/events/edit/:id" element={<NewEvent />} />
             </Route>
           </Routes>
         </BrowserRouter>

@@ -15,42 +15,54 @@ import {
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import clsx from 'clsx';
-import { useAuth } from '../../context/AuthContext';
-import api from '../../services/api';
+// import { useAuth } from '../../context/AuthContext';
+// import api from '../../services/api';
 
 interface EventDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    event: any; // Simplified for now, can be typed strictly
+    event: EventData | null;
     onUpdate?: () => void;
     onEventUpdate?: (updatedEvent: any) => void;
 }
 
-export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, onClose, event, onUpdate, onEventUpdate }) => {
-    const { user } = useAuth();
-    const [isUpdating, setIsUpdating] = React.useState(false);
+interface EventDetails {
+    [key: string]: string | number | null;
+}
+
+interface EventData {
+    id: string;
+    artist_id: string;
+    contractor_id?: string;
+    city: string;
+    state?: string;
+    venue_name?: string;
+    date: string;
+    type?: string;
+    status: string;
+    event_name?: string;
+    contract_url?: string;
+    created_at?: string;
+    updated_at?: string;
+    artists?: { name: string; logo_url: string };
+    contractors?: { name: string };
+    details_contacts?: EventDetails;
+    details_suppliers?: EventDetails;
+    details_transports?: EventDetails;
+    details_lodging?: EventDetails;
+    details_lineup?: EventDetails;
+}
+
+export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, onClose, event }) => {
+    // const { user } = useAuth();
+    const [activeTab, setActiveTab] = React.useState('info');
+
+    // Reset tab to 'info' when modal opens
+    React.useEffect(() => {
+        if (isOpen) setActiveTab('info');
+    }, [isOpen]);
 
     if (!isOpen || !event) return null;
-
-    const isAdmin = user?.role === 'admin';
-
-    const handleStatusChange = async (newStatus: string) => {
-        if (!isAdmin || isUpdating) return;
-
-        setIsUpdating(true);
-        try {
-            await api.put(`/events/${event.id}`, {
-                status: newStatus
-            });
-            if (onEventUpdate) onEventUpdate({ ...event, status: newStatus });
-            if (onUpdate) onUpdate();
-        } catch (error) {
-            console.error('Erro ao atualizar status do evento:', error);
-            alert('Falha ao atualizar o status do evento. Verifique suas permissões.');
-        } finally {
-            setIsUpdating(false);
-        }
-    };
 
     const handlePrint = () => {
         window.print();
@@ -71,6 +83,52 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
 
     const statusInfo = getStatusInfo(event.status);
 
+    const tabs = [
+        { id: 'info', label: 'Geral', icon: FileText },
+        { id: 'contacts', label: 'Contatos', icon: User },
+        { id: 'suppliers', label: 'Técnica', icon: Briefcase }, // Using Briefcase as generic, or import Mic2
+        { id: 'transports', label: 'Logística', icon: Briefcase }, // Using Briefcase or maybe MapPin?
+        { id: 'lodging', label: 'Hospedagem', icon: Briefcase }, // Using Briefcase
+        { id: 'lineup', label: 'Line-up', icon: Clock },
+    ];
+
+    const FIELD_LABELS: Record<string, string> = {
+        // Contatos
+        produtor_geral: 'Produtor Geral',
+        produtor_palco: 'Produtor de Palco',
+        produtor_tecnico: 'Produtor Técnico',
+        assessoria_imprensa: 'Assessoria de Imprensa',
+        produtor_financeiro: 'Produtor Financeiro',
+        diarias_alimentacao: 'Diárias / Alimentação',
+        cortesias: 'Cortesias',
+        carregadores: 'Carregadores',
+        // Fornecedores
+        sonorizacao: 'Sonorização',
+        iluminacao: 'Iluminação',
+        led: 'Painel de LED',
+        palco: 'Palco',
+        gride: 'Gride',
+        estrutura_camarim: 'Estrutura de Camarim',
+        abastecimento_camarim: 'Catering / Camarim',
+        geradores: 'Geradores',
+        // Transporte
+        responsavel_transporte: 'Resp. Transporte',
+        motorista_bau: 'Motorista Baú',
+        motorista_van_tecnica: 'Motorista Van Técnica',
+        motorista_van_banda: 'Motorista Van Banda',
+        motorista_suv_artista: 'Motorista SUV Artista',
+        // Hospedagem
+        contato_hotel: 'Contato Hotel',
+        nome_hotel: 'Nome do Hotel',
+        cidade_hospedagem: 'Cidade Hospedagem',
+        // Lineup
+        atracao1: 'Atração 1',
+        atracao2: 'Atração 2',
+        atracao3: 'Atração 3',
+        atracao4: 'Atração 4',
+        atracao5: 'Atração 5'
+    };
+
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             {/* Overlay */}
@@ -80,9 +138,13 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
             />
 
             {/* Modal Content */}
-            <div className="relative w-full max-w-2xl bg-[var(--bg-sidebar)] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 print:shadow-none print:w-full print:max-w-none print:m-0 print:rounded-none">
+            <div className="relative w-full max-w-3xl bg-[var(--bg-sidebar)] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] print:shadow-none print:w-full print:max-w-none print:m-0 print:rounded-none">
+
+
+
+
                 {/* Header */}
-                <div className="p-6 border-b border-[var(--border-main)] flex items-center justify-between bg-[var(--bg-sidebar)] print:hidden">
+                <div className="p-6 border-b border-[var(--border-main)] flex items-center justify-between bg-[var(--bg-sidebar)] print:hidden shrink-0">
                     <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-primary-500/10 text-primary-600 rounded-xl flex items-center justify-center border border-primary-500/20">
                             <FileText size={22} />
@@ -93,12 +155,14 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                         </div>
                     </div>
                     <div className="flex items-center space-x-2">
+
                         <button
                             onClick={handlePrint}
-                            className="p-2 text-[var(--text-muted)] hover:text-primary-600 hover:bg-primary-500/10 rounded-lg transition-all"
-                            title="Imprimir / Exportar PDF"
+                            className="flex items-center space-x-2 p-2 px-3 bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg transition-all border border-primary-200"
+                            title="Exportar como PDF"
                         >
-                            <Printer size={20} />
+                            <Printer size={18} />
+                            <span className="text-xs font-bold">PDF</span>
                         </button>
                         <button
                             onClick={onClose}
@@ -109,130 +173,270 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                     </div>
                 </div>
 
+
+
+
+
+
                 {/* Print Only Header */}
                 <div className="hidden print:flex flex-col items-center justify-center p-8 border-b-2 border-secondary-100 mb-8">
                     <h1 className="text-3xl font-black text-secondary-900 tracking-tighter">DW<span className="text-primary-600">SISTEMAS</span></h1>
                     <p className="text-sm font-bold text-secondary-500 uppercase tracking-[0.2em] mt-2">Relatório Detalhado de Agendamento</p>
                 </div>
 
+                {/* Tabs Navigation */}
+                <div className="px-6 pt-2 bg-[var(--bg-sidebar)] border-b border-[var(--border-main)] overflow-x-auto print:hidden shrink-0">
+                    <div className="flex space-x-1 min-w-max">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={clsx(
+                                    "flex items-center space-x-2 px-4 py-3 border-b-2 text-sm font-bold transition-all whitespace-nowrap",
+                                    activeTab === tab.id
+                                        ? "border-primary-600 text-primary-600 bg-primary-50/50 dark:bg-primary-900/10"
+                                        : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--border-main)]"
+                                )}
+                            >
+                                <tab.icon size={16} />
+                                <span>{tab.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 {/* Body */}
-                <div className="p-8 space-y-8 overflow-y-auto max-h-[85vh] print:max-h-none print:p-0">
-                    {/* Artista & Status Section */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-secondary-50">
+                <div className="p-8 space-y-8 overflow-y-auto flex-1 print:max-h-none print:p-0 print:overflow-visible">
+
+                    {/* Always visible header info (Artist & Date) */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-[var(--border-main)] print:border-none">
                         <div className="flex items-center space-x-4">
-                            <div className="w-20 h-20 rounded-2xl bg-secondary-100 border-2 border-white shadow-md overflow-hidden flex-shrink-0">
+                            <div className="w-16 h-16 rounded-xl bg-secondary-100 border border-[var(--border-main)] overflow-hidden flex-shrink-0">
                                 {event.artists?.logo_url ? (
                                     <img src={event.artists.logo_url} alt={event.artists.name} className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-[var(--text-muted)]">
-                                        <User size={32} />
+                                        <User size={24} />
                                     </div>
                                 )}
                             </div>
                             <div>
-                                <h2 className="text-2xl font-black text-[var(--text-main)] leading-tight mb-1">{event.artists?.name || 'Artista não definido'}</h2>
-                                {isAdmin ? (
-                                    <div className="flex flex-wrap gap-2 mt-2">
-                                        {[
-                                            { id: 'confirmed', label: 'Confirmar', icon: <CheckCircle2 size={12} />, color: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' },
-                                            { id: 'pending', label: 'Pendente', icon: <Clock3 size={12} />, color: 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100' },
-                                            { id: 'cancelled', label: 'Cancelar', icon: <XCircle size={12} />, color: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' }
-                                        ].map(status => (
-                                            <button
-                                                key={status.id}
-                                                onClick={() => handleStatusChange(status.id)}
-                                                disabled={isUpdating || event.status === status.id}
-                                                className={clsx(
-                                                    "inline-flex items-center space-x-1.5 px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider transition-all",
-                                                    status.color,
-                                                    event.status === status.id ? "ring-2 ring-primary-500 opacity-100" : "opacity-60 grayscale hover:grayscale-0"
-                                                )}
-                                            >
-                                                {status.icon}
-                                                <span>{status.label}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className={clsx(
-                                        "inline-flex items-center space-x-1.5 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wider",
-                                        statusInfo.color
-                                    )}>
-                                        {statusInfo.icon}
-                                        <span>{statusInfo.label}</span>
-                                    </div>
+                                {event.event_name && (
+                                    <p className="text-sm font-bold text-primary-600 uppercase tracking-wider mb-0.5">{event.event_name}</p>
                                 )}
+                                <h2 className="text-xl font-bold text-[var(--text-main)] leading-tight mb-1">{event.artists?.name || 'Artista não definido'}</h2>
+                                <div className={clsx(
+                                    "inline-flex items-center space-x-1.5 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wider",
+                                    statusInfo.color
+                                )}>
+                                    {statusInfo.icon}
+                                    <span>{statusInfo.label}</span>
+                                </div>
                             </div>
                         </div>
-
-                        <div className="bg-[var(--bg-main)] p-4 rounded-xl border border-[var(--border-main)] flex flex-col justify-center items-center md:items-end min-w-[200px]">
-                            <div className="flex items-center text-primary-600 font-black text-xl mb-1">
-                                <CalendarIcon size={18} className="mr-2" />
+                        <div className="flex flex-col items-end text-right">
+                            <div className="flex items-center text-primary-600 font-bold mb-1">
+                                <CalendarIcon size={16} className="mr-2" />
                                 {format(parseISO(event.date), "dd 'de' MMMM", { locale: ptBR })}
                             </div>
-                            <div className="flex items-center text-[var(--text-muted)] font-bold text-sm">
-                                <Clock size={16} className="mr-2" />
+                            <div className="flex items-center text-[var(--text-muted)] text-sm">
+                                <Clock size={14} className="mr-2" />
                                 {format(parseISO(event.date), "EEEE, HH:mm'h'", { locale: ptBR })}
                             </div>
                         </div>
                     </div>
 
-                    {/* Detalhes de Localização e Contrato */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Coluna 1: Onde e Quem */}
-                        <div className="space-y-6">
-                            <div className="space-y-3">
-                                <h4 className="flex items-center text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">
-                                    <MapPin size={12} className="mr-2" /> Localização
-                                </h4>
-                                <div className="space-y-1">
-                                    <p className="text-lg font-bold text-[var(--text-main)]">{event.venue_name || 'Venu não especificado'}</p>
-                                    <p className="text-[var(--text-muted)]">{event.city}, {event.state}</p>
-                                </div>
-                            </div>
+                    {/* Tab Content - Print All Logic */}
+                    <div className="min-h-[300px] print:min-h-0">
+                        {/* INFO GERAL */}
+                        <div className={clsx(activeTab === 'info' ? 'block' : 'hidden print:block', "animate-in fade-in slide-in-from-bottom-2 duration-300 print:animate-none")}>
+                            {/* Header for print only */}
+                            <h3 className="hidden print:block text-lg font-bold mb-4 border-b border-gray-300 pb-2 uppercase text-gray-700">Informações Gerais</h3>
 
-                            <div className="space-y-3">
-                                <h4 className="flex items-center text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">
-                                    <Briefcase size={12} className="mr-2" /> Realização / Contratante
-                                </h4>
-                                <div className="space-y-1">
-                                    <p className="text-lg font-bold text-[var(--text-main)]">{event.contractors?.name || 'Contratante não definido'}</p>
-                                    <p className="text-[var(--text-muted)] text-sm">Responsável pelo evento no local.</p>
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:gap-4">
+                                    <div className="space-y-4">
+                                        <h4 className="flex items-center text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border-main)] pb-2">
+                                            <MapPin size={14} className="mr-2 text-primary-500" /> Localização
+                                        </h4>
+                                        <div className="bg-[var(--bg-main)] p-4 rounded-lg border border-[var(--border-main)] print:border-gray-200">
+                                            <p className="text-lg font-bold text-[var(--text-main)]">{event.venue_name || 'Local não especificado'}</p>
+                                            <p className="text-[var(--text-muted)]">{event.city}, {event.state}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <h4 className="flex items-center text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border-main)] pb-2">
+                                            <Briefcase size={14} className="mr-2 text-primary-500" /> Contratante & Contrato
+                                        </h4>
+                                        <div className="bg-[var(--bg-main)] p-4 rounded-lg border border-[var(--border-main)] space-y-3 print:border-gray-200">
+                                            <div>
+                                                <p className="text-lg font-bold text-[var(--text-main)]">{event.contractors?.name || 'Contratante não definido'}</p>
+                                                <p className="text-[var(--text-muted)] text-sm">Responsável legal</p>
+                                            </div>
+                                            {event.contract_url && (
+                                                <div className="pt-3 border-t border-[var(--border-main)] print:hidden">
+                                                    <a
+                                                        href={event.contract_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center text-sm font-bold text-primary-600 hover:text-primary-700 hover:underline"
+                                                    >
+                                                        <FileText size={14} className="mr-2" />
+                                                        Visualizar Contrato Anexado
+                                                    </a>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4">
+                                    <h4 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">Metadados</h4>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[10px] text-[var(--text-muted)] font-mono bg-[var(--bg-main)] p-3 rounded border border-[var(--border-main)] print:border-gray-200">
+                                        <div>
+                                            <span className="block font-bold mb-1">ID Evento</span>
+                                            <span className="select-all">{event.id}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block font-bold mb-1">Tipo</span>
+                                            <span className="capitalize">{event.type}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block font-bold mb-1">Criado em</span>
+                                            <span>{format(parseISO(event.created_at || new Date().toISOString()), "dd/MM/yy HH:mm")}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block font-bold mb-1">Última Atualização</span>
+                                            <span>{event.updated_at ? format(parseISO(event.updated_at), "dd/MM/yy HH:mm") : '-'}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Coluna 2: Informações Técnicas */}
-                        <div className="space-y-6">
-                            <div className="space-y-3 p-5 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-main)] border-dashed">
-                                <h4 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">Tipo de Agendamento</h4>
-                                <p className="text-lg font-bold text-[var(--text-main)] capitalize">{event.type || 'Show'}</p>
-                                <div className="h-px bg-[var(--border-main)]"></div>
-                                <h4 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mt-4">Data do Cadastro</h4>
-                                <p className="text-sm text-[var(--text-muted)] italic">
-                                    Registrado em {format(parseISO(event.created_at || new Date().toISOString()), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                                </p>
+                        {/* CONTATOS */}
+                        <div className={clsx(activeTab === 'contacts' ? 'block' : 'hidden print:block', "animate-in fade-in slide-in-from-bottom-2 duration-300 print:animate-none print:mt-8")}>
+                            {/* Header for print only */}
+                            <h3 className="hidden print:block text-lg font-bold mb-4 border-b border-gray-300 pb-2 uppercase text-gray-700">Contatos</h3>
+
+                            <div className="space-y-6">
+                                <h4 className="flex items-center text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border-main)] pb-2 mb-4 print:hidden">
+                                    <User size={14} className="mr-2 text-primary-500" /> Produção & Equipe
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2">
+                                    {[
+                                        'produtor_geral', 'produtor_palco', 'produtor_tecnico', 'assessoria_imprensa',
+                                        'produtor_financeiro', 'diarias_alimentacao', 'cortesias', 'carregadores'
+                                    ].map((key) => (
+                                        <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
+                                            <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/_/g, ' ')}</span>
+                                            <span className="text-sm font-semibold text-[var(--text-main)] text-right pl-2">{(event.details_contacts as any)?.[key] || '-'}</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Notas / Observações (Placeholder for now) */}
-                    <div className="pt-6 border-t border-[var(--border-main)]">
-                        <h4 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-3">Observações do Agendamento</h4>
-                        <p className="text-sm text-[var(--text-muted)] leading-relaxed italic">
-                            Este documento serve como comprovante de agendamento interno para fins de logística e controle de agenda.
-                            Informações sujeitas a alterações sem aviso prévio.
-                        </p>
+                        {/* FORNECEDORES */}
+                        <div className={clsx(activeTab === 'suppliers' ? 'block' : 'hidden print:block', "animate-in fade-in slide-in-from-bottom-2 duration-300 print:animate-none print:mt-8")}>
+                            {/* Header for print only */}
+                            <h3 className="hidden print:block text-lg font-bold mb-4 border-b border-gray-300 pb-2 uppercase text-gray-700">Fornecedores Técnicos</h3>
+
+                            <div className="space-y-6">
+                                <h4 className="flex items-center text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border-main)] pb-2 mb-4 print:hidden">
+                                    <Briefcase size={14} className="mr-2 text-primary-500" /> Fornecedores Técnicos
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2">
+                                    {[
+                                        'sonorizacao', 'iluminacao', 'led', 'palco', 'gride',
+                                        'estrutura_camarim', 'abastecimento_camarim', 'geradores'
+                                    ].map((key) => (
+                                        <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
+                                            <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/_/g, ' ')}</span>
+                                            <span className="text-sm font-semibold text-[var(--text-main)] text-right pl-2">{(event.details_suppliers as any)?.[key] || '-'}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* TRANSPORTES */}
+                        <div className={clsx(activeTab === 'transports' ? 'block' : 'hidden print:block', "animate-in fade-in slide-in-from-bottom-2 duration-300 print:animate-none print:mt-8")}>
+                            {/* Header for print only */}
+                            <h3 className="hidden print:block text-lg font-bold mb-4 border-b border-gray-300 pb-2 uppercase text-gray-700">Logística e Transporte</h3>
+
+                            <div className="space-y-6">
+                                <h4 className="flex items-center text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border-main)] pb-2 mb-4 print:hidden">
+                                    <Briefcase size={14} className="mr-2 text-primary-500" /> Logística
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2">
+                                    {[
+                                        'responsavel_transporte', 'motorista_bau', 'motorista_van_tecnica',
+                                        'motorista_van_banda', 'motorista_suv_artista'
+                                    ].map((key) => (
+                                        <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
+                                            <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/_/g, ' ')}</span>
+                                            <span className="text-sm font-semibold text-[var(--text-main)] text-right pl-2">{(event.details_transports as any)?.[key] || '-'}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* HOSPEDAGEM */}
+                        <div className={clsx(activeTab === 'lodging' ? 'block' : 'hidden print:block', "animate-in fade-in slide-in-from-bottom-2 duration-300 print:animate-none print:mt-8")}>
+                            {/* Header for print only */}
+                            <h3 className="hidden print:block text-lg font-bold mb-4 border-b border-gray-300 pb-2 uppercase text-gray-700">Hospedagem</h3>
+
+                            <div className="space-y-6">
+                                <h4 className="flex items-center text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border-main)] pb-2 mb-4 print:hidden">
+                                    <Briefcase size={14} className="mr-2 text-primary-500" /> Hospedagem
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2">
+                                    {[
+                                        'contato_hotel', 'nome_hotel', 'cidade_hospedagem'
+                                    ].map((key) => (
+                                        <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
+                                            <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/_/g, ' ')}</span>
+                                            <span className="text-sm font-semibold text-[var(--text-main)] text-right pl-2">{(event.details_lodging as any)?.[key] || '-'}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* LINEUP */}
+                        <div className={clsx(activeTab === 'lineup' ? 'block' : 'hidden print:block', "animate-in fade-in slide-in-from-bottom-2 duration-300 print:animate-none print:mt-8")}>
+                            {/* Header for print only */}
+                            <h3 className="hidden print:block text-lg font-bold mb-4 border-b border-gray-300 pb-2 uppercase text-gray-700">Line-up</h3>
+
+                            <div className="space-y-6">
+                                <h4 className="flex items-center text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border-main)] pb-2 mb-4 print:hidden">
+                                    <Clock size={14} className="mr-2 text-primary-500" /> Line-up / Horários
+                                </h4>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {[
+                                        'atracao1', 'atracao2', 'atracao3', 'atracao4', 'atracao5'
+                                    ].map((key) => (
+                                        <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
+                                            <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/(\D+)(\d+)/, '$1 $2')}</span>
+                                            <span className="text-sm font-semibold text-[var(--text-main)]">{(event.details_lineup as any)?.[key] || '-'}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-6 bg-[var(--bg-main)] border-t border-[var(--border-main)] flex justify-between items-center print:hidden">
+                <div className="p-6 bg-[var(--bg-main)] border-t border-[var(--border-main)] flex justify-between items-center print:hidden shrink-0">
                     <button
                         onClick={onClose}
                         className="px-6 py-2 text-sm font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
                     >
-                        Fechar Visualização
+                        Fechar
                     </button>
                     <div className="flex space-x-3">
                         <button
@@ -249,35 +453,9 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                 <div className="hidden print:block text-center mt-12 pt-8 border-t border-secondary-100 text-[10px] text-secondary-400">
                     Relatório gerado automaticamente pelo sistema Dw Sistemas em {format(new Date(), "dd/MM/yyyy HH:mm:ss")}.
                 </div>
-            </div>
 
-            <style>{`
-                @media print {
-                    @page { margin: 1cm; size: auto; }
-                    body * { visibility: hidden; }
-                    .print-content, .print-content * { visibility: visible; }
-                    .print-content { position: absolute; left: 0; top: 0; width: 100%; }
-                    
-                    /* Force modal to be visible and standard layout */
-                    .relative.w-full.max-w-2xl { 
-                        visibility: visible !important;
-                        position: static !important;
-                        width: 100% !important;
-                        max-width: none !important;
-                        box-shadow: none !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
-                        background: white !important;
-                        color: black !important;
-                    }
-                    .relative.w-full.max-w-2xl * { visibility: visible !important; }
-                    .fixed.inset-0 { position: static !important; }
-                    .bg-secondary-900/60 { display: none !important; }
-                    .text-\[var\(--text-main\)\] { color: black !important; }
-                    .text-\[var\(--text-muted\)\] { color: #666 !important; }
-                    .border-\[var\(--border-main\)\] { border-color: #eee !important; }
-                }
-            `}</style>
+
+            </div>
         </div>
     );
 };

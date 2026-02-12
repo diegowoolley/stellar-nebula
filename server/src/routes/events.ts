@@ -37,6 +37,23 @@ router.get('/', authenticateUser, async (req: AuthRequest, res: Response) => {
     res.json(data);
 });
 
+// BUSCAR evento único por ID
+router.get('/:id', authenticateUser, async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const { data, error } = await supabase
+        .from('events')
+        .select(`
+      *,
+      artists (name, logo_url),
+      contractors (name)
+    `)
+        .eq('id', id)
+        .single();
+
+    if (error) return res.status(404).json({ error: 'Evento não encontrado.' });
+    res.json(data);
+});
+
 // CRIAR evento
 router.post('/', authenticateUser, authorizeRole(['admin', 'producer']), async (req: AuthRequest, res: Response) => {
     const {
