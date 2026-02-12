@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Outlet, Navigate, Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Outlet, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 import {
     LayoutDashboard,
     Calendar,
@@ -24,12 +25,34 @@ export const AppLayout = () => {
     const { theme, toggleTheme } = useTheme();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [pendingEvents, setPendingEvents] = useState<any[]>([]);
+    const navigate = useNavigate();
     const location = useLocation();
 
     // Redireciona para o login se não estiver autenticado
     if (!isAuthenticated) {
         return <Navigate to="/login" />;
     }
+
+    // Busca eventos pendentes
+    useEffect(() => {
+        const fetchPendingEvents = async () => {
+            try {
+                const response = await api.get('/events/pending');
+                setPendingEvents(response.data || []);
+            } catch (error) {
+                console.error('Erro ao buscar notificações:', error);
+            }
+        };
+
+        if (isAuthenticated) {
+            fetchPendingEvents();
+            // Opcional: Polling para atualizar a cada X segundos
+            const interval = setInterval(fetchPendingEvents, 60000); // 1 min
+            return () => clearInterval(interval);
+        }
+    }, [isAuthenticated]);
 
     // Definição dos itens de navegação lateral
     const navigation = [
@@ -158,9 +181,70 @@ export const AppLayout = () => {
                         </button>
 
                         {/* Botão de Notificações */}
-                        <button className="p-2 text-[var(--text-muted)] hover:bg-[var(--bg-main)] rounded-full transition-all">
-                            <Bell size={18} />
-                        </button>
+                        {/* Botão de Notificações */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                                className="relative p-2 text-[var(--text-muted)] hover:bg-[var(--bg-main)] rounded-full transition-all"
+                            >
+                                <Bell size={18} />
+                                {pendingEvents.length > 0 && (
+                                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white border border-[var(--bg-sidebar)]">
+                                        {pendingEvents.length}
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* Dropdown de Notificações */}
+                            {isNotificationsOpen && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-10"
+                                        onClick={() => setIsNotificationsOpen(false)}
+                                    />
+                                    <div className="absolute right-0 mt-2 w-80 bg-[var(--bg-sidebar)] border border-[var(--border-main)] rounded-lg shadow-lg py-1 z-20 animate-in fade-in zoom-in-95 duration-100 max-h-96 overflow-y-auto">
+                                        <div className="px-4 py-2 border-b border-[var(--border-main)] flex justify-between items-center">
+                                            <h3 className="text-sm font-semibold text-[var(--text-main)]">Notificações</h3>
+                                            <span className="text-xs text-[var(--text-muted)]">{pendingEvents.length} pendentes</span>
+                                        </div>
+
+                                        {pendingEvents.length === 0 ? (
+                                            <div className="px-4 py-6 text-center text-sm text-[var(--text-muted)]">
+                                                Nenhuma notificação pendente
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-[var(--border-main)]">
+                                                {pendingEvents.map((event) => (
+                                                    <button
+                                                        key={event.id}
+                                                        onClick={() => {
+                                                            navigate(`/events/${event.id}`);
+                                                            setIsNotificationsOpen(false);
+                                                        }}
+                                                        className="w-full text-left px-4 py-3 hover:bg-[var(--bg-main)] transition-colors"
+                                                    >
+                                                        <div className="flex justify-between items-start mb-1">
+                                                            <span className="text-sm font-medium text-[var(--text-main)] line-clamp-1">{event.event_name}</span>
+                                                            <span className="text-[10px] text-[var(--text-muted)] whitespace-nowrap ml-2">
+                                                                {new Date(event.date).toLocaleDateString()}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-[var(--text-muted)] mb-1">
+                                                            {event.contractors?.name ? `Contratante: ${event.contractors.name}` : 'Sem contratante'}
+                                                        </p>
+                                                        <div className="flex items-center">
+                                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500">
+                                                                Pendente
+                                                            </span>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
 
                         <div className="h-6 w-px bg-secondary-200"></div>
 

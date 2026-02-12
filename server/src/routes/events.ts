@@ -22,6 +22,37 @@ const upload = multer({
     }
 });
 
+// BUSCAR lista de eventos pendentes (com limite opcional)
+router.get('/pending', authenticateUser, async (req: AuthRequest, res: Response) => {
+    const { data, error } = await supabase
+        .from('events')
+        .select(`
+            id,
+            event_name,
+            date,
+            status,
+            artists (name),
+            contractors (name)
+        `)
+        .eq('status', 'pending')
+        .order('date', { ascending: true })
+        .limit(10); // Limita a 10 para o dropdown
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+});
+
+// BUSCAR contagem de eventos pendentes
+router.get('/pending-count', authenticateUser, async (req: AuthRequest, res: Response) => {
+    const { count, error } = await supabase
+        .from('events')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ count });
+});
+
 // BUSCAR todos os eventos
 router.get('/', authenticateUser, async (req: AuthRequest, res: Response) => {
     const { data, error } = await supabase
