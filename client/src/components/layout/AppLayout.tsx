@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Outlet, Navigate, Link, useLocation } from 'react-router-dom';
+import { Outlet, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import { supabase } from '../../services/supabase';
 import {
     LayoutDashboard,
     Calendar,
@@ -28,6 +27,7 @@ export const AppLayout = () => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [pendingEvents, setPendingEvents] = useState<any[]>([]);
+    const navigate = useNavigate();
     const location = useLocation();
 
     // Redireciona para o login se não estiver autenticado
@@ -48,39 +48,9 @@ export const AppLayout = () => {
 
         if (isAuthenticated) {
             fetchPendingEvents();
-
-            // Inscrição Realtime para atualizações (INSERT e UPDATE na tabela events)
-            const channel = supabase
-                .channel('realtime-events')
-                .on(
-                    'postgres_changes',
-                    { event: 'INSERT', schema: 'public', table: 'events' },
-                    (payload) => {
-                        console.log('Realtime INSERT received:', payload);
-                        fetchPendingEvents();
-                    }
-                )
-                .on(
-                    'postgres_changes',
-                    { event: 'UPDATE', schema: 'public', table: 'events' },
-                    (payload) => {
-                        console.log('Realtime UPDATE received:', payload);
-                        fetchPendingEvents();
-                    }
-                )
-                .on(
-                    'postgres_changes',
-                    { event: 'DELETE', schema: 'public', table: 'events' },
-                    (payload) => {
-                        console.log('Realtime DELETE received:', payload);
-                        fetchPendingEvents();
-                    }
-                )
-                .subscribe();
-
-            return () => {
-                supabase.removeChannel(channel);
-            };
+            // Opcional: Polling para atualizar a cada X segundos
+            const interval = setInterval(fetchPendingEvents, 60000); // 1 min
+            return () => clearInterval(interval);
         }
     }, [isAuthenticated]);
 
@@ -245,9 +215,13 @@ export const AppLayout = () => {
                                         ) : (
                                             <div className="divide-y divide-[var(--border-main)]">
                                                 {pendingEvents.map((event) => (
-                                                    <div
+                                                    <button
                                                         key={event.id}
-                                                        className="w-full text-left px-4 py-3 hover:bg-[var(--bg-main)] transition-colors cursor-default"
+                                                        onClick={() => {
+                                                            navigate(`/events/${event.id}`);
+                                                            setIsNotificationsOpen(false);
+                                                        }}
+                                                        className="w-full text-left px-4 py-3 hover:bg-[var(--bg-main)] transition-colors"
                                                     >
                                                         <div className="flex justify-between items-start mb-1">
                                                             <span className="text-sm font-medium text-[var(--text-main)] line-clamp-1">{event.event_name}</span>
@@ -263,7 +237,7 @@ export const AppLayout = () => {
                                                                 Pendente
                                                             </span>
                                                         </div>
-                                                    </div>
+                                                    </button>
                                                 ))}
                                             </div>
                                         )}
