@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Outlet, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Navigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../services/supabase';
 import api from '../../services/api';
 import {
     LayoutDashboard,
@@ -27,7 +28,6 @@ export const AppLayout = () => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [pendingEvents, setPendingEvents] = useState<any[]>([]);
-    const navigate = useNavigate();
     const location = useLocation();
 
     // Redireciona para o login se não estiver autenticado
@@ -48,9 +48,27 @@ export const AppLayout = () => {
 
         if (isAuthenticated) {
             fetchPendingEvents();
-            // Opcional: Polling para atualizar a cada X segundos
-            const interval = setInterval(fetchPendingEvents, 60000); // 1 min
-            return () => clearInterval(interval);
+
+            // Inscreve para mudanças em tempo real na tabela de eventos
+            const subscription = supabase
+                .channel('events_channel')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'events'
+                    },
+                    () => {
+                        // Recarrega contagem ao detectar qualquer mudança
+                        fetchPendingEvents();
+                    }
+                )
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(subscription);
+            };
         }
     }, [isAuthenticated]);
 
@@ -215,13 +233,9 @@ export const AppLayout = () => {
                                         ) : (
                                             <div className="divide-y divide-[var(--border-main)]">
                                                 {pendingEvents.map((event) => (
-                                                    <button
+                                                    <div
                                                         key={event.id}
-                                                        onClick={() => {
-                                                            navigate(`/events/${event.id}`);
-                                                            setIsNotificationsOpen(false);
-                                                        }}
-                                                        className="w-full text-left px-4 py-3 hover:bg-[var(--bg-main)] transition-colors"
+                                                        className="w-full text-left px-4 py-3 hover:bg-[var(--bg-main)] transition-colors cursor-default"
                                                     >
                                                         <div className="flex justify-between items-start mb-1">
                                                             <span className="text-sm font-medium text-[var(--text-main)] line-clamp-1">{event.event_name}</span>
@@ -237,7 +251,7 @@ export const AppLayout = () => {
                                                                 Pendente
                                                             </span>
                                                         </div>
-                                                    </button>
+                                                    </div>
                                                 ))}
                                             </div>
                                         )}
