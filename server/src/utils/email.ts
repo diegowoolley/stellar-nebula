@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
         pass: process.env.SMTP_PASS?.replace(/\s+/g, ''), // Remove espaços caso o usuário tenha copiado do Google assim
     },
     family: 4, // Força o uso de IPv4 para evitar erros de ENETUNREACH (IPv6) no Render
-});
+} as any);
 
 export const sendEmail = async (to: string, subject: string, html: string) => {
     try {
