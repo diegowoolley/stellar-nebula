@@ -13,6 +13,46 @@ import clsx from 'clsx';
 interface Artist { id: string; name: string; }
 interface Contractor { id: string; name: string; }
 
+interface ContactField {
+    name: string;
+    phone: string;
+}
+
+const ContactInput = ({ label, value, onChange }: { label: string, value: ContactField | string, onChange: (val: ContactField) => void }) => {
+    // Ensure value is an object
+    const contact = typeof value === 'string' ? { name: value, phone: '' } : (value || { name: '', phone: '' });
+
+    const handleNameChange = (name: string) => {
+        onChange({ ...contact, name });
+    };
+
+    const handlePhoneChange = (phone: string) => {
+        onChange({ ...contact, phone: maskPhone(phone) });
+    };
+
+    return (
+        <div className="space-y-1">
+            <label className="text-xs font-bold text-[var(--text-muted)] uppercase truncate block" title={label}>{label}</label>
+            <div className="flex gap-2">
+                <input
+                    type="text"
+                    placeholder="Nome"
+                    value={contact.name}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    className="input-field flex-1 min-w-0" // min-w-0 prevents flex item from overflowing
+                />
+                <input
+                    type="text"
+                    placeholder="Telefone"
+                    value={contact.phone}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    className="input-field w-32 sm:w-40"
+                />
+            </div>
+        </div>
+    );
+};
+
 const InputField = ({ label, value, onChange, placeholder, type = "text", required = false }: any) => {
     const handleChange = (val: string) => {
         if (label?.toLowerCase().includes('telefone') || placeholder?.toLowerCase().includes('telefone') || label?.toLowerCase().includes('contato')) {
@@ -61,35 +101,35 @@ export const NewEvent = () => {
         type: 'show',
         contract_url: '',
         details_contacts: {
-            produtor_geral: '',
-            produtor_palco: '',
-            produtor_tecnico: '',
-            assessoria_imprensa: '',
-            produtor_financeiro: '',
-            diarias_alimentacao: '',
-            cortesias: '',
-            carregadores: ''
+            produtor_geral: { name: '', phone: '' },
+            produtor_palco: { name: '', phone: '' },
+            produtor_tecnico: { name: '', phone: '' },
+            assessoria_imprensa: { name: '', phone: '' },
+            produtor_financeiro: { name: '', phone: '' },
+            diarias_alimentacao: { name: '', phone: '' },
+            cortesias: { name: '', phone: '' },
+            carregadores: { name: '', phone: '' }
         },
         details_suppliers: {
-            sonorizacao: '',
-            iluminacao: '',
-            led: '',
-            palco: '',
-            gride: '',
-            estrutura_camarim: '',
-            abastecimento_camarim: '',
-            geradores: ''
+            sonorizacao: { name: '', phone: '' },
+            iluminacao: { name: '', phone: '' },
+            led: { name: '', phone: '' },
+            palco: { name: '', phone: '' },
+            gride: { name: '', phone: '' },
+            estrutura_camarim: { name: '', phone: '' },
+            abastecimento_camarim: { name: '', phone: '' },
+            geradores: { name: '', phone: '' }
         },
         details_transports: {
-            responsavel_transporte: '',
-            motorista_bau: '',
-            motorista_van_tecnica: '',
-            motorista_van_banda: '',
-            motorista_suv_artista: ''
+            responsavel_transporte: { name: '', phone: '' },
+            motorista_bau: { name: '', phone: '' },
+            motorista_van_tecnica: { name: '', phone: '' },
+            motorista_van_banda: { name: '', phone: '' },
+            motorista_suv_artista: { name: '', phone: '' }
         },
         details_lodging: {
-            contato_hotel: '',
-            nome_hotel: '',
+            contato_hotel: { name: '', phone: '' },
+            nome_hotel: { name: '', phone: '' },
             cidade_hospedagem: ''
         },
         details_lineup: {
@@ -138,6 +178,31 @@ export const NewEvent = () => {
                     const eventRes = await api.get(`/events/${id}`);
                     const event = eventRes.data;
 
+                    // Helper to parse legacy strings into objects
+                    const parseDetail = (data: any, defaultStruct: any) => {
+                        if (!data) return defaultStruct;
+                        const result: any = {};
+                        Object.keys(defaultStruct).forEach(key => {
+                            const val = data[key];
+                            const defaultVal = defaultStruct[key];
+
+                            // If default is string (like cidade_hospedagem), expect string
+                            if (typeof defaultVal === 'string') {
+                                result[key] = typeof val === 'object' ? (val.name || '') : (val || '');
+                            } else {
+                                // Default is object {name, phone}
+                                if (typeof val === 'string') {
+                                    result[key] = { name: val, phone: '' };
+                                } else if (val && typeof val === 'object') {
+                                    result[key] = val;
+                                } else {
+                                    result[key] = { name: '', phone: '' };
+                                }
+                            }
+                        });
+                        return result;
+                    };
+
                     // Populate form
                     setFormData({
                         artist_id: event.artist_id,
@@ -150,10 +215,10 @@ export const NewEvent = () => {
                         status: event.status,
                         type: event.type || 'show',
                         contract_url: event.contract_url || '',
-                        details_contacts: event.details_contacts || formData.details_contacts,
-                        details_suppliers: event.details_suppliers || formData.details_suppliers,
-                        details_transports: event.details_transports || formData.details_transports,
-                        details_lodging: event.details_lodging || formData.details_lodging,
+                        details_contacts: parseDetail(event.details_contacts, formData.details_contacts),
+                        details_suppliers: parseDetail(event.details_suppliers, formData.details_suppliers),
+                        details_transports: parseDetail(event.details_transports, formData.details_transports),
+                        details_lodging: parseDetail(event.details_lodging, formData.details_lodging),
                         details_lineup: event.details_lineup || formData.details_lineup
                     });
                 }
@@ -378,12 +443,11 @@ export const NewEvent = () => {
                                         </h2>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {Object.keys(formData.details_contacts).map((key) => (
-                                                <InputField
+                                                <ContactInput
                                                     key={key}
                                                     label={key.replace(/_/g, ' ')}
                                                     value={(formData.details_contacts as any)[key]}
-                                                    onChange={(v: any) => setFormData({ ...formData, details_contacts: { ...formData.details_contacts, [key]: v } })}
-                                                    placeholder="Nome / Telefone"
+                                                    onChange={(v) => setFormData({ ...formData, details_contacts: { ...formData.details_contacts, [key]: v } })}
                                                 />
                                             ))}
                                         </div>
@@ -397,12 +461,11 @@ export const NewEvent = () => {
                                         </h2>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {Object.keys(formData.details_suppliers).map((key) => (
-                                                <InputField
+                                                <ContactInput
                                                     key={key}
                                                     label={key.replace(/_/g, ' ')}
                                                     value={(formData.details_suppliers as any)[key]}
-                                                    onChange={(v: any) => setFormData({ ...formData, details_suppliers: { ...formData.details_suppliers, [key]: v } })}
-                                                    placeholder="Empresa / Responsável"
+                                                    onChange={(v) => setFormData({ ...formData, details_suppliers: { ...formData.details_suppliers, [key]: v } })}
                                                 />
                                             ))}
                                         </div>
@@ -416,12 +479,11 @@ export const NewEvent = () => {
                                         </h2>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {Object.keys(formData.details_transports).map((key) => (
-                                                <InputField
+                                                <ContactInput
                                                     key={key}
                                                     label={key.replace(/_/g, ' ')}
                                                     value={(formData.details_transports as any)[key]}
-                                                    onChange={(v: any) => setFormData({ ...formData, details_transports: { ...formData.details_transports, [key]: v } })}
-                                                    placeholder="Motorista / Veículo"
+                                                    onChange={(v) => setFormData({ ...formData, details_transports: { ...formData.details_transports, [key]: v } })}
                                                 />
                                             ))}
                                         </div>
@@ -434,14 +496,24 @@ export const NewEvent = () => {
                                             <Hotel size={18} className="mr-2 text-primary-500" /> Hospedagem
                                         </h2>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {Object.keys(formData.details_lodging).map((key) => (
+                                            <ContactInput
+                                                label="Contato Hotel"
+                                                value={(formData.details_lodging as any).contato_hotel}
+                                                onChange={(v) => setFormData({ ...formData, details_lodging: { ...formData.details_lodging, contato_hotel: v } })}
+                                            />
+                                            <ContactInput
+                                                label="Nome Hotel"
+                                                value={(formData.details_lodging as any).nome_hotel}
+                                                onChange={(v) => setFormData({ ...formData, details_lodging: { ...formData.details_lodging, nome_hotel: v } })}
+                                            />
+                                            <div className="md:col-span-2">
                                                 <InputField
-                                                    key={key}
-                                                    label={key.replace(/_/g, ' ')}
-                                                    value={(formData.details_lodging as any)[key]}
-                                                    onChange={(v: any) => setFormData({ ...formData, details_lodging: { ...formData.details_lodging, [key]: v } })}
+                                                    label="Cidade Hospedagem"
+                                                    value={(formData.details_lodging as any).cidade_hospedagem}
+                                                    onChange={(v: any) => setFormData({ ...formData, details_lodging: { ...formData.details_lodging, cidade_hospedagem: v } })}
+                                                    placeholder="Cidade onde será a hospedagem"
                                                 />
-                                            ))}
+                                            </div>
                                         </div>
                                     </div>
                                 )}

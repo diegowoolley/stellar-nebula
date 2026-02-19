@@ -13,7 +13,8 @@ import {
     Calendar as CalendarIcon,
     Edit2,
     Check,
-    X
+    X,
+    ChevronDown
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
@@ -30,7 +31,12 @@ import {
     eachDayOfInterval,
     parseISO,
     startOfDay,
-    isBefore
+    endOfDay,
+    isBefore,
+    addWeeks,
+    subWeeks,
+    addDays,
+    subDays
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { EventDetailsModal } from '../components/calendar/EventDetailsModal';
@@ -81,6 +87,7 @@ export const Calendar = () => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+    const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
 
     // Efeito para buscar dados sempre que os filtros de artista ou status mudarem
     useEffect(() => {
@@ -129,9 +136,31 @@ export const Calendar = () => {
     };
 
     // Funções de navegação do calendário
-    const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
-    const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
-    const goToToday = () => setCurrentMonth(new Date());
+    const handleNext = () => {
+        if (viewMode === 'month') setCurrentMonth(addMonths(currentMonth, 1));
+        else if (viewMode === 'week') setCurrentMonth(addWeeks(currentMonth, 1));
+        else if (viewMode === 'day') setCurrentMonth(addDays(currentMonth, 1));
+    };
+
+    const handlePrev = () => {
+        if (viewMode === 'month') setCurrentMonth(subMonths(currentMonth, 1));
+        else if (viewMode === 'week') setCurrentMonth(subWeeks(currentMonth, 1));
+        else if (viewMode === 'day') setCurrentMonth(subDays(currentMonth, 1));
+    };
+    const goToToday = () => {
+        const today = new Date();
+        setCurrentMonth(today);
+        if (viewMode !== 'month') setViewMode('month'); // Reset to month view or keep user preference? Let's keep specific view but ensure day is visible.
+        // Actually, if we want to scroll to today, we should probably switch to a view where today is visible if it's not.
+
+        // Scroll logic for mobile
+        setTimeout(() => {
+            const element = document.getElementById(`day-${format(today, 'yyyy-MM-dd')}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 100);
+    };
 
     // Altera a seleção de status no filtro
     const toggleStatus = (status: string) => {
@@ -143,15 +172,48 @@ export const Calendar = () => {
     };
 
     // Cálculos para a grade do calendário usando date-fns
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart, { weekStartsOn: 0 }); // Domingo
-    const endDate = endOfWeek(monthEnd, { weekStartsOn: 0 });
+    const getCalendarInterval = () => {
+        if (viewMode === 'month') {
+            const monthStart = startOfMonth(currentMonth);
+            const monthEnd = endOfMonth(monthStart);
+            return {
+                start: startOfWeek(monthStart, { weekStartsOn: 0 }),
+                end: endOfWeek(monthEnd, { weekStartsOn: 0 })
+            };
+        } else if (viewMode === 'week') {
+            return {
+                start: startOfWeek(currentMonth, { weekStartsOn: 0 }),
+                end: endOfWeek(currentMonth, { weekStartsOn: 0 })
+            };
+        } else {
+            // Day view
+            return {
+                start: startOfDay(currentMonth),
+                end: endOfDay(currentMonth) // We need endOfDay imported or just use same start/end for eachDayOfInterval? eachDayOfInterval includes end.
+                // actually easier to just return [currentMonth] but let's keep interval logic
+            };
+        }
+    };
 
-    const calendarDays = eachDayOfInterval({
-        start: startDate,
-        end: endDate,
-    });
+    // Helper since we didn't import endOfDay and it might be cleaner to just custom logic
+    const calendarDays = viewMode === 'day'
+        ? [currentMonth]
+        : eachDayOfInterval(getCalendarInterval());
+
+    // Title formatter
+    const getHeaderTitle = () => {
+        if (viewMode === 'month') return format(currentMonth, 'MMMM yyyy', { locale: ptBR });
+        if (viewMode === 'week') {
+            const start = startOfWeek(currentMonth, { weekStartsOn: 0 });
+            const end = endOfWeek(currentMonth, { weekStartsOn: 0 });
+            // If same month: "d - d MMM yyyy"
+            if (isSameMonth(start, end)) return `${format(start, 'd')} - ${format(end, 'd MMM yyyy', { locale: ptBR })}`;
+            // Different months: "d MMM - d MMM yyyy"
+            return `${format(start, 'd MMM', { locale: ptBR })} - ${format(end, 'd MMM yyyy', { locale: ptBR })}`;
+        }
+        if (viewMode === 'day') return format(currentMonth, "d 'de' MMMM yyyy", { locale: ptBR });
+        return '';
+    };
 
     // Retorna o ícone correspondente ao status do evento
     const getStatusIcon = (status: string) => {
@@ -191,7 +253,7 @@ export const Calendar = () => {
                 </div>
                 <button
                     onClick={() => navigate('/events/new')}
-                    className="flex items-center space-x-2 bg-[var(--agenda-bg-accent)] text-[var(--agenda-text-accent)] hover:opacity-90 px-5 py-2.5 rounded-xl border border-[var(--agenda-border-accent)] font-bold transition-all active:scale-95 shadow-md shadow-primary-500/10"
+                    className="hidden sm:flex items-center space-x-2 bg-[var(--agenda-bg-accent)] text-[var(--agenda-text-accent)] hover:opacity-90 px-5 py-2.5 rounded-xl border border-[var(--agenda-border-accent)] font-bold transition-all active:scale-95 shadow-md shadow-primary-500/10"
                 >
                     <Plus size={20} strokeWidth={3} />
                     <span>Novo Agendamento</span>
@@ -302,38 +364,54 @@ export const Calendar = () => {
             {/* Container do Calendário Principal */}
             <div className="card h-full min-h-[600px] flex flex-col overflow-hidden">
                 {/* Barra de Ferramentas do Calendário (Mês atual e navegação) */}
-                <div className="p-4 border-b border-[var(--border-main)] flex items-center justify-between bg-[var(--bg-sidebar)] sticky top-0 z-10">
-                    <div className="flex items-center space-x-4">
-                        <h2 className="text-lg font-bold text-[var(--text-main)] min-w-[150px]">
-                            {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
+                <div className="p-4 border-b border-[var(--border-main)] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-[var(--bg-sidebar)] sticky top-0 z-10 transition-all">
+
+                    {/* Grupo 1: Título e Navegação (Topo no Mobile) */}
+                    <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start sm:gap-4">
+                        <h2 className="text-lg font-bold text-[var(--text-main)] min-w-[150px] capitalize truncate">
+                            {getHeaderTitle()}
                         </h2>
-                        <div className="flex items-center bg-[var(--bg-main)] border border-[var(--border-main)] rounded p-1 shadow-inner">
+
+                        <div className="flex items-center bg-[var(--bg-main)] border border-[var(--border-main)] rounded-lg p-1 shadow-sm shrink-0">
                             <button
-                                onClick={prevMonth}
-                                className="p-1 hover:bg-[var(--agenda-bg-accent)] hover:text-[var(--agenda-text-accent)] rounded transition-all text-[var(--text-main)] hover:shadow-sm"
+                                onClick={handlePrev}
+                                className="p-1.5 hover:bg-[var(--agenda-bg-accent)] hover:text-[var(--agenda-text-accent)] rounded-md transition-all text-[var(--text-main)] active:scale-95"
                             >
-                                <ChevronLeft size={20} />
+                                <ChevronLeft size={18} />
                             </button>
+                            <div className="w-px h-4 bg-[var(--border-main)] mx-1"></div>
                             <button
-                                onClick={nextMonth}
-                                className="p-1 hover:bg-[var(--agenda-bg-accent)] hover:text-[var(--agenda-text-accent)] rounded transition-all text-[var(--text-main)] hover:shadow-sm"
+                                onClick={handleNext}
+                                className="p-1.5 hover:bg-[var(--agenda-bg-accent)] hover:text-[var(--agenda-text-accent)] rounded-md transition-all text-[var(--text-main)] active:scale-95"
                             >
-                                <ChevronRight size={20} />
+                                <ChevronRight size={18} />
                             </button>
                         </div>
+                    </div>
+
+                    {/* Grupo 2: Ações e Filtros (Abaixo no Mobile) */}
+                    <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto sm:items-center sm:gap-3">
                         <button
                             onClick={goToToday}
-                            className="text-[10px] font-black uppercase tracking-widest bg-[var(--agenda-bg-accent)] text-[var(--agenda-text-accent)] hover:opacity-90 px-4 py-1.5 rounded-full border border-[var(--agenda-border-accent)] transition-all active:scale-95 shadow-sm"
+                            className="w-full sm:w-auto text-[10px] font-black uppercase tracking-widest bg-[var(--agenda-bg-accent)] text-[var(--agenda-text-accent)] hover:opacity-90 px-4 py-2.5 sm:py-2 rounded-lg border border-[var(--agenda-border-accent)] transition-all active:scale-95 shadow-sm whitespace-nowrap text-center"
                         >
                             Hoje
                         </button>
-                    </div>
 
-                    {/* Seletores de Visualização (Mês/Semana/Dia) - Apenas Desktop */}
-                    <div className="hidden sm:flex items-center bg-[var(--bg-main)] rounded p-1 shadow-inner border border-[var(--border-main)]">
-                        <button className="px-4 py-1.5 text-xs font-bold bg-[var(--bg-sidebar)] shadow-sm rounded text-[var(--text-main)]">Mês</button>
-                        <button className="px-4 py-1.5 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">Semana</button>
-                        <button className="px-4 py-1.5 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">Dia</button>
+                        <div className="relative w-full sm:w-[140px]">
+                            <select
+                                value={viewMode}
+                                onChange={(e) => setViewMode(e.target.value as 'month' | 'week' | 'day')}
+                                className="w-full appearance-none bg-[var(--bg-main)] text-[var(--text-main)] font-bold text-xs uppercase tracking-wider border border-[var(--border-main)] rounded-lg py-2.5 sm:py-2 pl-3 pr-8 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 cursor-pointer"
+                            >
+                                <option value="month">Mês</option>
+                                <option value="week">Semana</option>
+                                <option value="day">Dia</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[var(--text-muted)]">
+                                <ChevronDown size={14} />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -349,10 +427,14 @@ export const Calendar = () => {
                     </div>
 
                     {/* Grade de Células de Dias */}
-                    <div className="flex-1 grid grid-cols-7 divide-x divide-y divide-[var(--border-main)]">
+                    <div className={clsx(
+                        "flex-1 grid divide-x divide-y divide-[var(--border-main)]",
+                        viewMode === 'month' ? "grid-cols-7" : viewMode === 'week' ? "grid-cols-7" : "grid-cols-1"
+                    )}>
                         {calendarDays.map((day) => {
                             const dayEvents = events.filter(e => isSameDay(parseISO(e.date), day));
-                            const isCurrentMonth = isSameMonth(day, monthStart);
+                            // Only fade out if in month view and not same month. In week view we usually show all.
+                            const isCurrentMonth = viewMode === 'month' ? isSameMonth(day, currentMonth) : true;
                             const isToday = isSameDay(day, new Date());
 
                             return (
@@ -361,7 +443,8 @@ export const Calendar = () => {
                                     className={clsx(
                                         "min-h-[120px] p-2 transition-colors relative group",
                                         !isCurrentMonth ? "bg-[var(--bg-main)]/50 opacity-40" : "bg-[var(--bg-sidebar)]",
-                                        isToday && "bg-primary-500/5"
+                                        isToday && "bg-primary-500/5",
+                                        viewMode === 'month' ? "" : "min-h-[200px]" // Taller cells for week/day view on desktop?
                                     )}
                                 >
                                     <div className="flex items-center justify-between mb-1">
@@ -385,61 +468,61 @@ export const Calendar = () => {
                                                 key={event.id}
                                                 onClick={() => handleEventClick(event)}
                                                 className={clsx(
-                                                    "p-2 rounded-lg border hover:shadow-md cursor-pointer transition-all active:scale-[0.97] mb-1 group/card",
+                                                    "p-2 rounded-lg border hover:shadow-md cursor-pointer transition-all active:scale-[0.97] mb-1 group/card flex flex-col gap-1",
                                                     event.status === 'confirmed' ? "bg-green-500/10 text-green-600 border-green-500/20" :
                                                         event.status === 'pending' ? "bg-yellow-500/10 text-yellow-600 border-yellow-500/20 font-semibold" :
                                                             "bg-red-500/10 text-red-600 border-red-500/20 line-through opacity-60"
                                                 )}
                                             >
-                                                <div className="flex items-center justify-between mb-0.5">
+                                                <div className="flex items-center justify-between">
                                                     <div className="flex items-center space-x-1 overflow-hidden">
                                                         {getStatusIcon(event.status)}
                                                         <span className="text-[9px] font-bold uppercase overflow-hidden truncate">
                                                             {event.venue_name || event.city}
                                                         </span>
                                                     </div>
-
-                                                    {/* Quick Actions (Admin/Producer) - Only if not in past */}
-                                                    {(user?.role === 'admin' || user?.role === 'producer') && !isBefore(parseISO(event.date), startOfDay(new Date())) && (
-                                                        <div className="flex items-center space-x-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
-
-                                                            <button
-                                                                onClick={(e) => handleEditClick(e, event.id)}
-                                                                className="p-0.5 hover:bg-black/10 rounded text-[var(--text-main)]"
-                                                                title="Editar"
-                                                            >
-                                                                <Edit2 size={8} />
-                                                            </button>
-                                                            {event.status !== 'confirmed' && (
-                                                                <button
-                                                                    onClick={(e) => handleStatusUpdate(e, event.id, 'confirmed')}
-                                                                    className="p-0.5 hover:bg-green-500/20 rounded text-green-600"
-                                                                    title="Confirmar"
-                                                                >
-                                                                    <Check size={8} />
-                                                                </button>
-                                                            )}
-                                                            {event.status !== 'cancelled' && (
-                                                                <button
-                                                                    onClick={(e) => handleStatusUpdate(e, event.id, 'cancelled')}
-                                                                    className="p-0.5 hover:bg-red-500/20 rounded text-red-600"
-                                                                    title="Cancelar"
-                                                                >
-                                                                    <X size={8} />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    )}
                                                 </div>
-                                                <div className="flex items-center justify-between text-[8px] font-medium opacity-90">
+
+                                                <div className="flex items-center justify-between text-[10px] font-bold opacity-90">
                                                     <span className="flex items-center">
-                                                        <Clock size={8} className="mr-0.5" />
+                                                        <Clock size={10} className="mr-0.5" />
                                                         {format(parseISO(event.date), 'HH:mm')}
                                                     </span>
                                                     <span className="truncate ml-1">
                                                         {event.artists?.name}
                                                     </span>
                                                 </div>
+
+                                                {/* Desktop Quick Actions - Moved below and larger */}
+                                                {(user?.role === 'admin' || user?.role === 'producer') && !isBefore(parseISO(event.date), startOfDay(new Date())) && (
+                                                    <div className="flex items-center gap-1 mt-1 opacity-0 group-hover/card:opacity-100 transition-opacity justify-end border-t border-current/10 pt-1">
+                                                        <button
+                                                            onClick={(e) => handleEditClick(e, event.id)}
+                                                            className="p-1.5 hover:bg-[var(--text-main)]/10 rounded-md transition-colors text-[var(--text-main)]"
+                                                            title="Editar"
+                                                        >
+                                                            <Edit2 size={12} />
+                                                        </button>
+                                                        {event.status !== 'confirmed' && (
+                                                            <button
+                                                                onClick={(e) => handleStatusUpdate(e, event.id, 'confirmed')}
+                                                                className="p-1.5 hover:bg-green-500/20 rounded-md transition-colors text-green-700"
+                                                                title="Confirmar"
+                                                            >
+                                                                <Check size={12} strokeWidth={2.5} />
+                                                            </button>
+                                                        )}
+                                                        {event.status !== 'cancelled' && (
+                                                            <button
+                                                                onClick={(e) => handleStatusUpdate(e, event.id, 'cancelled')}
+                                                                className="p-1.5 hover:bg-red-500/20 rounded-md transition-colors text-red-700"
+                                                                title="Cancelar"
+                                                            >
+                                                                <X size={12} strokeWidth={2.5} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -463,13 +546,12 @@ export const Calendar = () => {
                 {/* Exibição para Mobile (Lista de Cards) */}
                 <div className="lg:hidden flex-1 overflow-y-auto bg-[var(--bg-main)] p-4 space-y-4 min-h-[400px]">
                     {calendarDays
-                        .filter(day => isSameMonth(day, currentMonth))
                         .map((day) => {
                             const dayEvents = events.filter(e => isSameDay(parseISO(e.date), day));
                             const isToday = isSameDay(day, new Date());
 
                             return (
-                                <div key={day.toString()} className="space-y-2">
+                                <div key={day.toString()} id={`day-${format(day, 'yyyy-MM-dd')}`} className="space-y-2">
                                     {/* Cabeçalho do Dia */}
                                     <div className={clsx(
                                         "flex items-center justify-between px-2 py-1 sticky top-0 z-10 backdrop-blur-sm",
@@ -504,75 +586,75 @@ export const Calendar = () => {
                                                     key={event.id}
                                                     onClick={() => handleEventClick(event)}
                                                     className={clsx(
-                                                        "bg-[var(--bg-sidebar)] rounded-xl border border-[var(--border-main)] shadow-sm p-3 active:scale-[0.98] transition-all relative overflow-hidden group/mobile-card",
+                                                        "bg-[var(--bg-sidebar)] rounded-xl border border-[var(--border-main)] shadow-sm p-4 active:scale-[0.98] transition-all relative overflow-hidden group/mobile-card",
                                                         event.status === 'cancelled' && "opacity-60 grayscale"
                                                     )}
                                                 >
                                                     <div className={clsx(
-                                                        "absolute left-0 top-0 bottom-0 w-1",
+                                                        "absolute left-0 top-0 bottom-0 w-1.5",
                                                         event.status === 'confirmed' ? "bg-green-500" :
                                                             event.status === 'pending' ? "bg-yellow-500" :
                                                                 "bg-red-500"
                                                     )}></div>
 
-                                                    <div className="ml-2 flex justify-between items-start">
+                                                    <div className="ml-3 flex justify-between items-start">
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center space-x-2 mb-1">
-                                                                <span className="text-xs font-black text-[var(--text-muted)] uppercase">{format(parseISO(event.date), 'HH:mm')}</span>
-                                                                <h4 className="text-sm font-bold text-[var(--text-main)] truncate">{event.artists?.name}</h4>
+                                                            <div className="flex items-center space-x-2 mb-1.5">
+                                                                <span className="text-xs font-black text-[var(--text-muted)] uppercase tracking-wider">{format(parseISO(event.date), 'HH:mm')}</span>
+                                                                <h4 className="text-base font-bold text-[var(--text-main)] truncate">{event.artists?.name}</h4>
                                                             </div>
-                                                            <div className="flex items-center text-[11px] text-[var(--text-muted)] font-medium">
-                                                                <MapPin size={10} className="mr-1" />
+                                                            <div className="flex items-center text-xs text-[var(--text-muted)] font-medium mb-3">
+                                                                <MapPin size={12} className="mr-1" />
                                                                 <span className="truncate">{event.venue_name || event.city}</span>
                                                             </div>
-                                                        </div>
 
-                                                        <div className="flex items-center gap-2">
-                                                            {/* Mobile Quick Actions */}
-                                                            {/* Mobile Quick Actions - Only if not in past */}
+                                                            {/* Mobile Quick Actions - Below Artist Name & Larger */}
                                                             {(user?.role === 'admin' || user?.role === 'producer') && !isBefore(parseISO(event.date), startOfDay(new Date())) && (
-                                                                <div className="flex items-center space-x-2 mr-2">
+                                                                <div className="flex items-center gap-3 mt-2">
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
                                                                             navigate('/events/new', { state: { initialDate: event.date } });
                                                                         }}
-                                                                        className="p-1.5 bg-primary-50 text-primary-600 rounded-full"
+                                                                        className="p-2.5 bg-primary-500/10 text-primary-600 rounded-lg hover:bg-primary-500/20 border border-primary-500/20 transition-colors"
                                                                         title="Novo Evento"
                                                                     >
-                                                                        <Plus size={12} />
+                                                                        <Plus size={18} strokeWidth={2.5} />
                                                                     </button>
                                                                     <button
                                                                         onClick={(e) => handleEditClick(e, event.id)}
-                                                                        className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-[var(--text-main)]"
+                                                                        className="p-2.5 bg-[var(--bg-sidebar)] rounded-lg text-[var(--text-main)] hover:bg-[var(--bg-main)] border border-[var(--border-main)] transition-colors"
+                                                                        title="Editar"
                                                                     >
-                                                                        <Edit2 size={12} />
+                                                                        <Edit2 size={18} strokeWidth={2.5} />
                                                                     </button>
                                                                     {event.status !== 'confirmed' && (
                                                                         <button
                                                                             onClick={(e) => handleStatusUpdate(e, event.id, 'confirmed')}
-                                                                            className="p-1.5 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full"
+                                                                            className="p-2.5 bg-green-500/10 text-green-600 rounded-lg hover:bg-green-500/20 border border-green-500/20 transition-colors"
+                                                                            title="Confirmar"
                                                                         >
-                                                                            <Check size={12} />
+                                                                            <Check size={18} strokeWidth={2.5} />
                                                                         </button>
                                                                     )}
                                                                     {event.status !== 'cancelled' && (
                                                                         <button
                                                                             onClick={(e) => handleStatusUpdate(e, event.id, 'cancelled')}
-                                                                            className="p-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-full"
+                                                                            className="p-2.5 bg-red-500/10 text-red-600 rounded-lg hover:bg-red-500/20 border border-red-500/20 transition-colors"
+                                                                            title="Cancelar"
                                                                         >
-                                                                            <X size={12} />
+                                                                            <X size={18} strokeWidth={2.5} />
                                                                         </button>
                                                                     )}
                                                                 </div>
                                                             )}
-
-                                                            {event.artists?.logo_url && (
-                                                                <div className="w-8 h-8 rounded-full bg-[var(--bg-main)] overflow-hidden border border-[var(--border-main)] flex-shrink-0">
-                                                                    <img src={event.artists.logo_url} alt="" className="w-full h-full object-cover" />
-                                                                </div>
-                                                            )}
                                                         </div>
+
+                                                        {event.artists?.logo_url && (
+                                                            <div className="w-12 h-12 rounded-full bg-[var(--bg-main)] overflow-hidden border border-[var(--border-main)] flex-shrink-0 shadow-sm">
+                                                                <img src={event.artists.logo_url} alt="" className="w-full h-full object-cover" />
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))
@@ -582,10 +664,10 @@ export const Calendar = () => {
                             );
                         })}
 
-                    {calendarDays.filter(day => isSameMonth(day, currentMonth)).length === 0 && (
+                    {calendarDays.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
                             <CalendarIcon size={48} className="text-[var(--text-muted)] opacity-20 mb-4" />
-                            <p className="text-[var(--text-main)] font-black">Mês vazio</p>
+                            <p className="text-[var(--text-main)] font-black">Nenhum dia para exibir</p>
                         </div>
                     )}
                 </div>

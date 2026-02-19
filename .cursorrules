@@ -1,0 +1,11 @@
+# Project Rules
+
+## 1. Language
+- **ALWAYS** communicate in **Portuguese (pt-BR)**.
+- Code comments always in Portuguese and user communication must be Portuguese.
+
+## 2. Theme & Styling
+- **ALWAYS** respect Light and Dark themes.
+- **NEVER** use hardcoded colors like `bg-white` or `bg-gray-800` for structural elements.
+- **ALWAYS** use CSS variables defined in the project (e.g., `var(--bg-main)`, `var(--bg-sidebar)`, `var(--text-main)`, `var(--border-main)`).
+- Use `opacity` or `alpha` channels for backgrounds to ensure they blend correctly in both themes (e.g., `bg-primary-500/10`).

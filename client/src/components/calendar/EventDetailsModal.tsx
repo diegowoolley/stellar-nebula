@@ -328,12 +328,24 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                                     {[
                                         'produtor_geral', 'produtor_palco', 'produtor_tecnico', 'assessoria_imprensa',
                                         'produtor_financeiro', 'diarias_alimentacao', 'cortesias', 'carregadores'
-                                    ].map((key) => (
-                                        <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
-                                            <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/_/g, ' ')}</span>
-                                            <span className="text-sm font-semibold text-[var(--text-main)] text-right pl-2">{(event.details_contacts as any)?.[key] || '-'}</span>
-                                        </div>
-                                    ))}
+                                    ].map((key) => {
+                                        const val = (event.details_contacts as any)?.[key];
+                                        const display = typeof val === 'object' && val !== null ? (
+                                            <div className="text-right">
+                                                <div className="text-sm font-semibold">{val.name || '-'}</div>
+                                                <div className="text-xs text-[var(--text-muted)]">{val.phone || ''}</div>
+                                            </div>
+                                        ) : (
+                                            <span className="text-sm font-semibold text-[var(--text-main)] text-right pl-2">{val || '-'}</span>
+                                        );
+
+                                        return (
+                                            <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
+                                                <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/_/g, ' ')}</span>
+                                                {display}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
@@ -351,12 +363,24 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                                     {[
                                         'sonorizacao', 'iluminacao', 'led', 'palco', 'gride',
                                         'estrutura_camarim', 'abastecimento_camarim', 'geradores'
-                                    ].map((key) => (
-                                        <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
-                                            <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/_/g, ' ')}</span>
-                                            <span className="text-sm font-semibold text-[var(--text-main)] text-right pl-2">{(event.details_suppliers as any)?.[key] || '-'}</span>
-                                        </div>
-                                    ))}
+                                    ].map((key) => {
+                                        const val = (event.details_suppliers as any)?.[key];
+                                        const display = typeof val === 'object' && val !== null ? (
+                                            <div className="text-right">
+                                                <div className="text-sm font-semibold">{val.name || '-'}</div>
+                                                <div className="text-xs text-[var(--text-muted)]">{val.phone || ''}</div>
+                                            </div>
+                                        ) : (
+                                            <span className="text-sm font-semibold text-[var(--text-main)] text-right pl-2">{val || '-'}</span>
+                                        );
+
+                                        return (
+                                            <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
+                                                <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/_/g, ' ')}</span>
+                                                {display}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
@@ -374,12 +398,24 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                                     {[
                                         'responsavel_transporte', 'motorista_bau', 'motorista_van_tecnica',
                                         'motorista_van_banda', 'motorista_suv_artista'
-                                    ].map((key) => (
-                                        <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
-                                            <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/_/g, ' ')}</span>
-                                            <span className="text-sm font-semibold text-[var(--text-main)] text-right pl-2">{(event.details_transports as any)?.[key] || '-'}</span>
-                                        </div>
-                                    ))}
+                                    ].map((key) => {
+                                        const val = (event.details_transports as any)?.[key];
+                                        const display = typeof val === 'object' && val !== null ? (
+                                            <div className="text-right">
+                                                <div className="text-sm font-semibold">{val.name || '-'}</div>
+                                                <div className="text-xs text-[var(--text-muted)]">{val.phone || ''}</div>
+                                            </div>
+                                        ) : (
+                                            <span className="text-sm font-semibold text-[var(--text-main)] text-right pl-2">{val || '-'}</span>
+                                        );
+
+                                        return (
+                                            <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
+                                                <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/_/g, ' ')}</span>
+                                                {display}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
@@ -396,12 +432,24 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2">
                                     {[
                                         'contato_hotel', 'nome_hotel', 'cidade_hospedagem'
-                                    ].map((key) => (
-                                        <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
-                                            <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/_/g, ' ')}</span>
-                                            <span className="text-sm font-semibold text-[var(--text-main)] text-right pl-2">{(event.details_lodging as any)?.[key] || '-'}</span>
-                                        </div>
-                                    ))}
+                                    ].map((key) => {
+                                        const val = (event.details_lodging as any)?.[key];
+                                        const display = typeof val === 'object' && val !== null ? (
+                                            <div className="text-right">
+                                                <div className="text-sm font-semibold">{val.name || '-'}</div>
+                                                <div className="text-xs text-[var(--text-muted)]">{val.phone || ''}</div>
+                                            </div>
+                                        ) : (
+                                            <span className="text-sm font-semibold text-[var(--text-main)] text-right pl-2">{val || '-'}</span>
+                                        );
+
+                                        return (
+                                            <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
+                                                <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/_/g, ' ')}</span>
+                                                {display}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
