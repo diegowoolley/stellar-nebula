@@ -3,6 +3,14 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+console.log('📧 Configuração SMTP:', {
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    secure: process.env.SMTP_SECURE,
+    user: process.env.SMTP_USER ? '***definido***' : '!!! AUSENTE !!!',
+    pass: process.env.SMTP_PASS ? '***definido***' : '!!! AUSENTE !!!'
+});
+
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT || '587'),
