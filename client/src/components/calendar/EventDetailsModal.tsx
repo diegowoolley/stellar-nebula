@@ -280,9 +280,9 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                                                         href={event.contract_url}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="flex items-center text-sm font-bold text-primary-600 hover:text-primary-700 hover:underline"
+                                                        className="flex items-center justify-center w-full px-4 py-2 bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg transition-all border border-primary-200 font-bold text-sm"
                                                     >
-                                                        <FileText size={14} className="mr-2" />
+                                                        <FileText size={16} className="mr-2" />
                                                         Visualizar Contrato Anexado
                                                     </a>
                                                 </div>

@@ -57,29 +57,57 @@ router.post('/login', async (req, res) => {
     }
 });
 
+import { sendEmail } from '../utils/email.js';
+
+// ... (imports remain the same)
+
 // Rota para iniciar a Recuperação de Senha
 router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
     try {
         const { data: user, error } = await supabase
             .from('users')
-            .select('id, email')
+            .select('id, email, name')
             .eq('email', email)
             .single();
 
         if (error || !user) {
-            return res.status(404).json({ message: 'Usuário não encontrado com este e-mail.' });
+            // Retornamos sucesso mesmo se não encontrar para evitar enumeração de usuários
+            return res.json({ message: 'Se o e-mail estiver cadastrado, você receberá as instruções.' });
         }
 
-        // Simulação de Token (Email em Base64 para desenvolvimento)
-        const token = Buffer.from(email).toString('base64');
+        // Gera token JWT válido por 1 hora
+        const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
 
-        res.json({
-            message: 'E-mail de recuperação enviado com sucesso!',
-            debugToken: token // Apenas para facilitar testes em dev
-        });
+        // Link para o frontend
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const resetLink = `${frontendUrl}/reset-password?token=${token}`;
+
+        // Envia o e-mail
+        const html = `
+            <div style="font-family: Arial, sans-serif; color: #333;">
+                <h2>Olá, ${user.name || 'Usuário'}!</h2>
+                <p>Recebemos uma solicitação para redefinir a senha da sua conta no Stellar Nebula.</p>
+                <p>Para criar uma nova senha, clique no botão abaixo:</p>
+                <a href="${resetLink}" style="background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 20px 0;">Redefinir Senha</a>
+                <p>Ou copie e cole o link abaixo no seu navegador:</p>
+                <p>${resetLink}</p>
+                <p>Se você não solicitou isso, pode ignorar este e-mail. O link expira em 1 hora.</p>
+            </div>
+        `;
+
+        await sendEmail(user.email, 'Redefinição de Senha - Stellar Nebula', html);
+
+        res.json({ message: 'Se o e-mail estiver cadastrado, você receberá as instruções.' });
     } catch (err: any) {
-        res.status(500).json({ message: 'Erro ao processar solicitação.' });
+        console.error('❌ ERRO CRÍTICO no forgot-password:', err);
+        if (err instanceof Error) {
+            console.error('Stack:', err.stack);
+        }
+        res.status(500).json({
+            message: 'Erro ao processar solicitação.',
+            error_details: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
     }
 });
 
@@ -87,8 +115,9 @@ router.post('/forgot-password', async (req, res) => {
 router.post('/reset-password', async (req, res) => {
     const { token, newPassword } = req.body;
     try {
-        // Decodifica o token para obter o e-mail (simulado)
-        const email = Buffer.from(token, 'base64').toString('ascii');
+        // Verifica o token JWT
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const email = decoded.email;
 
         // Gera novo hash para a nova senha
         const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -102,7 +131,10 @@ router.post('/reset-password', async (req, res) => {
 
         res.json({ message: 'Sua senha foi alterada com sucesso!' });
     } catch (err: any) {
-        res.status(500).json({ message: 'Token inválido ou erro ao atualizar senha.' });
+        if (err.name === 'TokenExpiredError') {
+            return res.status(400).json({ message: 'O link de recuperação expirou. Solicite um novo.' });
+        }
+        res.status(400).json({ message: 'Link inválido ou erro ao atualizar senha.' });
     }
 });
 
