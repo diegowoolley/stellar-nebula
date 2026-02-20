@@ -90,6 +90,13 @@ export const Contractors = () => {
     };
 
     const handleShareWhatsApp = async (contractor: Contractor) => {
+        // Safari do iPhone bloqueia window.open dentro de async/await se não for chamado imediatamente.
+        // A solução é abrir a janela antes da chamada de API e depois redirecionar.
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+            newWindow.document.write('<html><body style="background:#111;color:#fff;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;">Gerando link do WhatsApp...</body></html>');
+        }
+
         try {
             // Obter token do backend
             const { data } = await api.post(`/contractors/${contractor.id}/link`);
@@ -107,8 +114,17 @@ export const Contractors = () => {
                 digits = '55' + digits;
             }
 
-            window.open(`https://wa.me/${digits}?text=${encodedText}`, '_blank');
+            const whatsappUrl = `https://wa.me/${digits}?text=${encodedText}`;
+
+            if (newWindow) {
+                newWindow.location.href = whatsappUrl;
+            } else {
+                // Fallback caso o bloqueador de popup seja muito agressivo
+                window.location.href = whatsappUrl;
+            }
+
         } catch (error) {
+            if (newWindow) newWindow.close();
             alert('Erro ao gerar link de compartilhamento.');
             console.error(error);
         }
