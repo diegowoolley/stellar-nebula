@@ -379,18 +379,46 @@ export const ExternalRequest = () => {
                                     <h2 className="text-sm font-bold text-[var(--text-main)] border-b border-[var(--border-main)] pb-2 flex items-center">
                                         <Clock size={16} className="mr-2 text-primary-500" /> Programação Estimada
                                     </h2>
-                                    <div className="space-y-3 max-w-md">
-                                        {[1, 2, 3, 4, 5].map((num) => (
-                                            <InputField
-                                                key={num}
-                                                label={`Atração ${num}`}
-                                                value={(formData.details_lineup as any)[`atracao${num}`]}
-                                                onChange={(val: any) => setFormData({
-                                                    ...formData,
-                                                    details_lineup: { ...formData.details_lineup, [`atracao${num}`]: val }
-                                                })}
-                                            />
-                                        ))}
+                                    <div className="space-y-3 max-w-lg">
+                                        {[1, 2, 3, 4, 5].map((num) => {
+                                            const key = `atracao${num}`;
+                                            const value = (formData.details_lineup as any)[key];
+                                            const time = typeof value === 'object' ? value?.time || '' : '';
+                                            const name = typeof value === 'object' ? value?.name || '' : (typeof value === 'string' ? value : '');
+
+                                            return (
+                                                <div key={num} className="space-y-1">
+                                                    <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">Atração {num}</label>
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="time"
+                                                            className="w-24 px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-sm text-[var(--text-main)]"
+                                                            value={time}
+                                                            onChange={(e) => setFormData({
+                                                                ...formData,
+                                                                details_lineup: {
+                                                                    ...formData.details_lineup,
+                                                                    [key]: { time: e.target.value, name }
+                                                                }
+                                                            })}
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            className="flex-1 px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-sm text-[var(--text-main)] placeholder:opacity-40"
+                                                            placeholder="Nome do Artista"
+                                                            value={name}
+                                                            onChange={(e) => setFormData({
+                                                                ...formData,
+                                                                details_lineup: {
+                                                                    ...formData.details_lineup,
+                                                                    [key]: { time, name: e.target.value }
+                                                                }
+                                                            })}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}

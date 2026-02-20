@@ -523,19 +523,47 @@ export const NewEvent = () => {
                                         <h2 className="font-bold text-[var(--text-main)] flex items-center border-b border-[var(--border-main)] pb-2">
                                             <Clock size={18} className="mr-2 text-primary-500" /> Line-up / Atrações
                                         </h2>
-                                        <div className="space-y-3 max-w-md">
-                                            {[1, 2, 3, 4, 5].map((num) => (
-                                                <InputField
-                                                    key={num}
-                                                    label={`Atração ${num}`}
-                                                    value={(formData.details_lineup as any)[`atracao${num}`]}
-                                                    onChange={(val: any) => setFormData({
-                                                        ...formData,
-                                                        details_lineup: { ...formData.details_lineup, [`atracao${num}`]: val }
-                                                    })}
-                                                    placeholder="Horário - Artista"
-                                                />
-                                            ))}
+                                        <div className="space-y-3 max-w-lg">
+                                            {[1, 2, 3, 4, 5].map((num) => {
+                                                const key = `atracao${num}`;
+                                                const value = (formData.details_lineup as any)[key];
+                                                // Handle legacy string or new object
+                                                const time = typeof value === 'object' ? value?.time || '' : '';
+                                                const name = typeof value === 'object' ? value?.name || '' : (typeof value === 'string' ? value : '');
+
+                                                return (
+                                                    <div key={num} className="space-y-1">
+                                                        <label className="text-xs font-bold text-[var(--text-muted)] uppercase">Atração {num}</label>
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="time"
+                                                                className="input-field w-24"
+                                                                value={time}
+                                                                onChange={(e) => setFormData({
+                                                                    ...formData,
+                                                                    details_lineup: {
+                                                                        ...formData.details_lineup,
+                                                                        [key]: { time: e.target.value, name }
+                                                                    }
+                                                                })}
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                className="input-field flex-1"
+                                                                placeholder="Nome do Artista / Banda"
+                                                                value={name}
+                                                                onChange={(e) => setFormData({
+                                                                    ...formData,
+                                                                    details_lineup: {
+                                                                        ...formData.details_lineup,
+                                                                        [key]: { time, name: e.target.value }
+                                                                    }
+                                                                })}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 )}

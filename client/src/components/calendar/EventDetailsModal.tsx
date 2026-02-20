@@ -466,12 +466,27 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                                 <div className="grid grid-cols-1 gap-3">
                                     {[
                                         'atracao1', 'atracao2', 'atracao3', 'atracao4', 'atracao5'
-                                    ].map((key) => (
-                                        <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
-                                            <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/(\D+)(\d+)/, '$1 $2')}</span>
-                                            <span className="text-sm font-semibold text-[var(--text-main)]">{(event.details_lineup as any)?.[key] || '-'}</span>
-                                        </div>
-                                    ))}
+                                    ].map((key) => {
+                                        const val = (event.details_lineup as any)?.[key];
+                                        let display = '-';
+
+                                        if (typeof val === 'string' && val.trim()) {
+                                            display = val; // Legacy support
+                                        } else if (typeof val === 'object' && val !== null) {
+                                            const time = val.time || '';
+                                            const name = val.name || '';
+                                            if (time || name) {
+                                                display = time && name ? `${time}h - ${name}` : (time ? `${time}h` : name);
+                                            }
+                                        }
+
+                                        return (
+                                            <div key={key} className="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded border border-[var(--border-main)] print:border-gray-200">
+                                                <span className="text-xs font-bold text-[var(--text-muted)] capitalize">{FIELD_LABELS[key] || key.replace(/(\D+)(\d+)/, '$1 $2')}</span>
+                                                <span className="text-sm font-semibold text-[var(--text-main)]">{display}</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
