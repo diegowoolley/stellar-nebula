@@ -13,14 +13,6 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-// Log de verificação (adicionado novamente)
-console.log('📧 E-mail Service:', {
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    secure: process.env.SMTP_SECURE,
-    userDefined: !!process.env.SMTP_USER,
-});
-
 export const sendEmail = async (to: string, subject: string, html: string) => {
     try {
         const info = await transporter.sendMail({

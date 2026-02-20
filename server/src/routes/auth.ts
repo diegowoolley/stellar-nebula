@@ -100,14 +100,8 @@ router.post('/forgot-password', async (req, res) => {
 
         res.json({ message: 'Se o e-mail estiver cadastrado, você receberá as instruções.' });
     } catch (err: any) {
-        console.error('❌ ERRO CRÍTICO no forgot-password:', err);
-        if (err instanceof Error) {
-            console.error('Stack:', err.stack);
-        }
-        res.status(500).json({
-            message: 'Erro ao processar solicitação.',
-            error_details: process.env.NODE_ENV === 'development' ? err.message : undefined
-        });
+        console.error('Erro no forgot-password:', err);
+        res.status(500).json({ message: 'Erro ao processar solicitação.' });
     }
 });
 
