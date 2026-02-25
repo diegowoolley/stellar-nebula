@@ -38,12 +38,12 @@ export class AuthController {
                 .single();
 
             if (error || !user) {
-                throw new AppError('Usuário não encontrado', 401);
+                throw new AppError('Credenciais inválidas', 401);
             }
 
             const validPassword = await bcrypt.compare(password, user.password);
             if (!validPassword) {
-                throw new AppError('Senha inválida', 401);
+                throw new AppError('Credenciais inválidas', 401);
             }
 
             const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '24h' });

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { LogIn, User, Lock, Sun, Moon } from 'lucide-react';
+import { User, Lock, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { API_URL } from '../config/api';
 
@@ -53,9 +53,9 @@ export const Login = () => {
                 <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-indigo-600 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
 
                 <div className="relative z-10 text-white p-12 text-center">
-                    <div className="mb-6 flex justify-center">
-                        <div className="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
-                            <LogIn size={40} className="text-white" />
+                    <div className="mb-8 flex justify-center">
+                        <div className="h-32 w-auto min-w-[128px] bg-white p-4 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/20 flex items-center justify-center translate-y-2">
+                            <img src="/logo.png" alt="Dw Sistemas Logo" className="h-full w-auto object-contain" />
                         </div>
                     </div>
                     <h1 className="text-4xl font-bold mb-4">Dw Sistemas</h1>
