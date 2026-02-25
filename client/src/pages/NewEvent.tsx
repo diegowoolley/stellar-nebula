@@ -539,7 +539,6 @@ export const NewEvent = () => {
                                                     // For backwards compatibility and initial state, always show at least 5
                                                     if (lineupKeys.length < 5) {
                                                         const missing = 5 - lineupKeys.length;
-                                                        const maxExisting = Math.max(0, ...lineupKeys.map(k => parseInt(k.replace('atracao', ''), 10) || 0));
                                                         for (let i = 1; i <= missing; i++) {
                                                             if (!lineupKeys.includes(`atracao${i}`)) lineupKeys.push(`atracao${i}`);
                                                         }
