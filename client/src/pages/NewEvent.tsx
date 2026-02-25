@@ -18,8 +18,11 @@ interface ContactField {
     phone: string;
 }
 
+/**
+ * Componente auxiliar para renderizar campos de contato (nome e telefone).
+ */
 const ContactInput = ({ label, value, onChange }: { label: string, value: ContactField | string, onChange: (val: ContactField) => void }) => {
-    // Ensure value is an object
+    // Garante que o valor é um objeto, tratando strings legadas
     const contact = typeof value === 'string' ? { name: value, phone: '' } : (value || { name: '', phone: '' });
 
     const handleNameChange = (name: string) => {
@@ -39,7 +42,7 @@ const ContactInput = ({ label, value, onChange }: { label: string, value: Contac
                     placeholder="Nome"
                     value={contact.name}
                     onChange={(e) => handleNameChange(e.target.value)}
-                    className="input-field flex-1 min-w-0" // min-w-0 prevents flex item from overflowing
+                    className="input-field flex-1 min-w-0" // min-w-0 evita que o item flex ocupe mais espaço que o disponível
                 />
                 <input
                     type="text"
@@ -53,6 +56,9 @@ const ContactInput = ({ label, value, onChange }: { label: string, value: Contac
     );
 };
 
+/**
+ * Componente de input genérico com suporte a máscara de telefone opcional.
+ */
 const InputField = ({ label, value, onChange, placeholder, type = "text", required = false }: any) => {
     const handleChange = (val: string) => {
         if (label?.toLowerCase().includes('telefone') || placeholder?.toLowerCase().includes('telefone') || label?.toLowerCase().includes('contato')) {
@@ -77,6 +83,10 @@ const InputField = ({ label, value, onChange, placeholder, type = "text", requir
     );
 };
 
+/**
+ * Página principal para Criação e Edição de Eventos.
+ * O formulário é dividido em abas (Informações, Contatos, Fornecedores, etc).
+ */
 export const NewEvent = () => {
     const navigate = useNavigate();
     // const { user } = useAuth(); // Removed as it was only used for status check which is now gone

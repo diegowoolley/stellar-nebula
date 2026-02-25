@@ -14,17 +14,24 @@ import Profile from './pages/Profile';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
 import { Finance } from './pages/Finance';
-
+/**
+ * Componente raiz da aplicação.
+ * Configura os provedores de contexto (Tema, Autenticação) e as rotas de navegação usando react-router-dom.
+ */
 function App() {
   return (
+    // Provedor de Temas (Claro/Escuro)
     <ThemeProvider>
+      {/* Provedor de contexto de Autenticação */}
       <AuthProvider>
         <BrowserRouter>
+          {/* Definição das rotas públicas e privadas */}
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/external-request/:token" element={<ExternalRequest />} />
+            {/* Rotas protegidas (necessitam de login), renderizadas dentro do AppLayout */}
             <Route element={<AppLayout />}>
               <Route path="/" element={<Calendar />} />
               <Route path="/dashboard" element={<Dashboard />} />
