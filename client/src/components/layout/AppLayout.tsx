@@ -32,13 +32,17 @@ export const AppLayout = () => {
     }
 
     // Definição dos itens de navegação lateral
-    const navigation = [
-        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { name: 'Agenda', href: '/calendar', icon: Calendar },
-        { name: 'Artistas', href: '/artists', icon: Users },
-        { name: 'Contratantes', href: '/contractors', icon: Briefcase },
-        ...(user?.role === 'admin' ? [{ name: 'Usuários', href: '/users', icon: User }] : []),
-    ];
+    const navigation = user?.role === 'admin'
+        ? [
+            { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+            { name: 'Agenda', href: '/calendar', icon: Calendar },
+            { name: 'Artistas', href: '/artists', icon: Users },
+            { name: 'Contratantes', href: '/contractors', icon: Briefcase },
+            { name: 'Usuários', href: '/users', icon: User },
+        ]
+        : [
+            { name: 'Agenda', href: '/calendar', icon: Calendar },
+        ];
 
     return (
         <div className="min-h-screen">

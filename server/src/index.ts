@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import { supabase } from './db.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
 
@@ -55,6 +55,9 @@ app.use('/api/contractors', contractorRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/stats', statsRoutes);
+
+// Centralized error handling
+app.use(errorHandler);
 
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);

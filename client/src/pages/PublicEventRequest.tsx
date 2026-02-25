@@ -150,9 +150,24 @@ export const ExternalRequest = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.artist_id || !formData.date || !formData.city) {
-            return alert('Preencha os campos obrigatórios (Artista, Data e Cidade).');
+
+        // Validação estrita frontend
+        if (!formData.artist_id) return alert('Por favor, selecione um artista.');
+        if (!formData.date) return alert('Por favor, informe a data e hora do evento.');
+
+        const eventDate = new Date(formData.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (eventDate < today) {
+            return alert('Não é possível cadastrar eventos em datas passadas.');
         }
+
+        if (!formData.event_name || formData.event_name.length < 3) {
+            return alert('O nome do evento é obrigatório e deve ter pelo menos 3 caracteres.');
+        }
+        if (!formData.venue_name) return alert('O local do evento é obrigatório.');
+        if (!formData.city) return alert('Por favor, informe a cidade.');
+        if (!formData.state) return alert('Por favor, informe a UF (Estado).');
 
         setIsSubmitting(true);
         try {
@@ -162,7 +177,16 @@ export const ExternalRequest = () => {
             });
             setIsSubmitted(true);
         } catch (error: any) {
-            alert(error.response?.data?.error || 'Erro ao enviar solicitação.');
+            console.error('Erro na submissão:', error.response?.data);
+
+            // Tenta extrair erro detalhado do Zod se disponível
+            const serverError = error.response?.data;
+            if (serverError?.errors && Array.isArray(serverError.errors)) {
+                const messages = serverError.errors.map((e: any) => `${e.path}: ${e.message}`).join('\n');
+                alert(`Erro de validação:\n${messages}`);
+            } else {
+                alert(serverError?.message || serverError?.error || 'Erro ao enviar solicitação. Verifique os campos e tente novamente.');
+            }
         } finally {
             setIsSubmitting(false);
         }

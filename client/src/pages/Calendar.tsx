@@ -14,7 +14,8 @@ import {
     Edit2,
     Check,
     X,
-    ChevronDown
+    ChevronDown,
+    Printer
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
@@ -123,7 +124,7 @@ export const Calendar = () => {
 
         try {
             await api.put(`/events/${eventId}`, { status: newStatus });
-            fetchData(); // Refresh list
+            await fetchData(); // Refresh list from server
         } catch (error) {
             console.error('Erro ao atualizar status:', error);
             alert('Erro ao atualizar status do evento.');
@@ -251,13 +252,24 @@ export const Calendar = () => {
                     <h1 className="text-2xl font-bold text-[var(--text-main)]">Agenda</h1>
                     <p className="text-sm text-[var(--text-muted)]">Cronograma de shows e tours.</p>
                 </div>
-                <button
-                    onClick={() => navigate('/events/new')}
-                    className="hidden sm:flex items-center space-x-2 bg-[var(--agenda-bg-accent)] text-[var(--agenda-text-accent)] hover:opacity-90 px-5 py-2.5 rounded-xl border border-[var(--agenda-border-accent)] font-bold transition-all active:scale-95 shadow-md shadow-primary-500/10"
-                >
-                    <Plus size={20} strokeWidth={3} />
-                    <span>Novo Agendamento</span>
-                </button>
+                <div className="flex items-center space-x-3">
+                    <button
+                        onClick={() => window.print()}
+                        className="flex items-center space-x-2 bg-[var(--bg-main)] text-[var(--text-main)] hover:bg-[var(--bg-sidebar)] px-5 py-2.5 rounded-xl border border-[var(--border-main)] font-bold transition-all active:scale-95 shadow-sm"
+                    >
+                        <Printer size={20} strokeWidth={2.5} />
+                        <span className="hidden sm:inline">Imprimir</span>
+                    </button>
+                    {(user?.role === 'admin' || user?.role === 'producer') && (
+                        <button
+                            onClick={() => navigate('/events/new')}
+                            className="hidden sm:flex items-center space-x-2 bg-[var(--agenda-bg-accent)] text-[var(--agenda-text-accent)] hover:opacity-90 px-5 py-2.5 rounded-xl border border-[var(--agenda-border-accent)] font-bold transition-all active:scale-95 shadow-md shadow-primary-500/10"
+                        >
+                            <Plus size={20} strokeWidth={3} />
+                            <span>Novo Agendamento</span>
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Filtros de Visualização */}
@@ -493,9 +505,9 @@ export const Calendar = () => {
                                                     </span>
                                                 </div>
 
-                                                {/* Desktop Quick Actions - Moved below and larger */}
-                                                {(user?.role === 'admin' || user?.role === 'producer') && !isBefore(parseISO(event.date), startOfDay(new Date())) && (
-                                                    <div className="flex items-center gap-1 mt-1 opacity-0 group-hover/card:opacity-100 transition-opacity justify-end border-t border-current/10 pt-1">
+                                                {/* Desktop Quick Actions - Strict date check for all roles */}
+                                                {!isBefore(parseISO(event.date), startOfDay(new Date())) && (user?.role === 'admin' || user?.role === 'producer') && (
+                                                    <div className="flex items-center gap-1 mt-1 opacity-100 transition-opacity justify-end border-t border-current/10 pt-1">
                                                         <button
                                                             onClick={(e) => handleEditClick(e, event.id)}
                                                             className="p-1.5 hover:bg-[var(--text-main)]/10 rounded-md transition-colors text-[var(--text-main)]"
@@ -503,7 +515,7 @@ export const Calendar = () => {
                                                         >
                                                             <Edit2 size={12} />
                                                         </button>
-                                                        {event.status !== 'confirmed' && (
+                                                        {user?.role === 'admin' && event.status !== 'confirmed' && (
                                                             <button
                                                                 onClick={(e) => handleStatusUpdate(e, event.id, 'confirmed')}
                                                                 className="p-1.5 hover:bg-green-500/20 rounded-md transition-colors text-green-700"
@@ -512,7 +524,7 @@ export const Calendar = () => {
                                                                 <Check size={12} strokeWidth={2.5} />
                                                             </button>
                                                         )}
-                                                        {event.status !== 'cancelled' && (
+                                                        {user?.role === 'admin' && event.status !== 'cancelled' && (
                                                             <button
                                                                 onClick={(e) => handleStatusUpdate(e, event.id, 'cancelled')}
                                                                 className="p-1.5 hover:bg-red-500/20 rounded-md transition-colors text-red-700"
@@ -528,7 +540,7 @@ export const Calendar = () => {
                                     </div>
 
                                     {/* Botão de adicionar evento rápido no dia (Hovet) */}
-                                    {(!isSameDay(day, new Date()) && day < new Date()) ? null : (
+                                    {(user?.role === 'admin' || user?.role === 'producer') && !(!isSameDay(day, new Date()) && day < new Date()) && (
                                         <button
                                             className="absolute bottom-1.5 right-1.5 p-1.5 bg-[var(--bg-sidebar)] text-[var(--text-muted)] hover:text-primary-600 rounded-full border border-[var(--border-main)] opacity-0 group-hover:opacity-100 shadow-md transition-all hover:scale-110"
                                             title="Agendar neste dia"
@@ -563,7 +575,7 @@ export const Calendar = () => {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        {!isBefore(day, startOfDay(new Date())) && (
+                                        {(user?.role === 'admin' || user?.role === 'producer') && !isBefore(day, startOfDay(new Date())) && (
                                             <button
                                                 onClick={() => navigate('/events/new', { state: { initialDate: day.toISOString() } })}
                                                 className="p-1.5 text-primary-500 hover:bg-primary-50 rounded-full transition-colors"
@@ -577,8 +589,8 @@ export const Calendar = () => {
                                     {/* Lista de Eventos ou Placeholder */}
                                     <div className="space-y-3 pl-4 border-l-2 border-[var(--border-main)] ml-3">
                                         {dayEvents.length === 0 ? (
-                                            <div onClick={() => !isBefore(day, startOfDay(new Date())) && navigate('/events/new', { state: { initialDate: day.toISOString() } })} className={clsx("py-4 px-3 rounded-xl border border-dashed border-[var(--border-main)] text-[var(--text-muted)] text-xs font-medium flex items-center justify-center transition-colors opacity-60", !isBefore(day, startOfDay(new Date())) ? "cursor-pointer hover:bg-[var(--bg-sidebar)] hover:opacity-100" : "cursor-not-allowed")}>
-                                                {isBefore(day, startOfDay(new Date())) ? "Data passada" : "Toque para adicionar evento"}
+                                            <div onClick={() => (user?.role === 'admin' || user?.role === 'producer') && !isBefore(day, startOfDay(new Date())) && navigate('/events/new', { state: { initialDate: day.toISOString() } })} className={clsx("py-4 px-3 rounded-xl border border-dashed border-[var(--border-main)] text-[var(--text-muted)] text-xs font-medium flex items-center justify-center transition-colors opacity-60", (user?.role === 'admin' || user?.role === 'producer') && !isBefore(day, startOfDay(new Date())) ? "cursor-pointer hover:bg-[var(--bg-sidebar)] hover:opacity-100" : "cursor-not-allowed")}>
+                                                {isBefore(day, startOfDay(new Date())) ? "Data passada" : (user?.role === 'admin' || user?.role === 'producer') ? "Toque para adicionar evento" : "Nenhum evento"}
                                             </div>
                                         ) : (
                                             dayEvents.map(event => (
@@ -608,8 +620,8 @@ export const Calendar = () => {
                                                                 <span className="truncate">{event.venue_name || event.city}</span>
                                                             </div>
 
-                                                            {/* Mobile Quick Actions - Below Artist Name & Larger */}
-                                                            {(user?.role === 'admin' || user?.role === 'producer') && !isBefore(parseISO(event.date), startOfDay(new Date())) && (
+                                                            {/* Mobile Quick Actions - Strict date check for all roles */}
+                                                            {!isBefore(parseISO(event.date), startOfDay(new Date())) && (user?.role === 'admin' || user?.role === 'producer') && (
                                                                 <div className="flex items-center gap-3 mt-2">
                                                                     <button
                                                                         onClick={(e) => {
@@ -628,7 +640,7 @@ export const Calendar = () => {
                                                                     >
                                                                         <Edit2 size={18} strokeWidth={2.5} />
                                                                     </button>
-                                                                    {event.status !== 'confirmed' && (
+                                                                    {user?.role === 'admin' && event.status !== 'confirmed' && (
                                                                         <button
                                                                             onClick={(e) => handleStatusUpdate(e, event.id, 'confirmed')}
                                                                             className="p-2.5 bg-green-500/10 text-green-600 rounded-lg hover:bg-green-500/20 border border-green-500/20 transition-colors"
@@ -637,7 +649,7 @@ export const Calendar = () => {
                                                                             <Check size={18} strokeWidth={2.5} />
                                                                         </button>
                                                                     )}
-                                                                    {event.status !== 'cancelled' && (
+                                                                    {user?.role === 'admin' && event.status !== 'cancelled' && (
                                                                         <button
                                                                             onClick={(e) => handleStatusUpdate(e, event.id, 'cancelled')}
                                                                             className="p-2.5 bg-red-500/10 text-red-600 rounded-lg hover:bg-red-500/20 border border-red-500/20 transition-colors"

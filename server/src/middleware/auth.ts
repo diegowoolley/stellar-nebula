@@ -1,7 +1,11 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+    console.warn('WARNING: JWT_SECRET is not defined in environment variables.');
+}
 
 // Interface estendida para incluir dados do usuário no objeto Request do Express
 export interface AuthRequest extends Request {
@@ -19,6 +23,9 @@ export const authenticateUser = (req: AuthRequest, res: Response, next: NextFunc
     }
 
     try {
+        if (!JWT_SECRET) {
+            return res.status(500).json({ error: 'JWT_SECRET não configurado no servidor.' });
+        }
         // Verifica a validade do token
         const decoded = jwt.verify(token, JWT_SECRET);
         req.user = decoded;

@@ -256,31 +256,31 @@ export const NewEvent = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validação Estrita
+        // Validação Estrita - Todos os campos da aba Informações são obrigatórios
         const requiredFields = [
             { field: formData.artist_id, label: 'Artista' },
+            { field: formData.contractor_id, label: 'Contratante' },
+            { field: formData.event_name, label: 'Nome do Evento' },
             { field: formData.date, label: 'Data e Hora' },
+            { field: formData.venue_name, label: 'Local do Evento (Venue)' },
             { field: formData.city, label: 'Cidade' },
-            { field: formData.state, label: 'Estado (UF)' },
-            { field: formData.venue_name, label: 'Local do Evento' },
-            { field: formData.contractor_id, label: 'Contratante' }
+            { field: formData.state, label: 'UF' }
         ];
 
-        const missingFields = requiredFields.filter(f => !f.field).map(f => f.label);
+        const missingFields = requiredFields.filter(f => !f.field || (typeof f.field === 'string' && f.field.trim() === '')).map(f => f.label);
 
         if (missingFields.length > 0) {
-            return alert(`Por favor, preencha as informações obrigatórias para não faltar nada:\n- ${missingFields.join('\n- ')}`);
+            return alert(`Por favor, preencha todas as informações obrigatórias da aba Evento:\n- ${missingFields.join('\n- ')}`);
         }
 
         const eventDate = new Date(formData.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-        // Disable past date check for editing
-        if (!id) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            if (eventDate < today) {
-                return alert('Não é possível cadastrar eventos em datas passadas.');
-            }
+        // Bloqueio de datas passadas (apenas para novos registros, permitindo editar existentes se for o caso, 
+        // mas o usuário pediu "so deixara incluir se a data for a atual ou pra frente")
+        if (!id && eventDate < today) {
+            return alert('Não é possível cadastrar eventos em datas passadas.');
         }
 
         setIsSubmitting(true);

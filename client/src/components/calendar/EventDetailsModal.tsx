@@ -10,13 +10,14 @@ import {
     Briefcase,
     CheckCircle2,
     Clock3,
-    XCircle
+    XCircle,
+    Check
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import clsx from 'clsx';
-// import { useAuth } from '../../context/AuthContext';
-// import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 
 interface EventDetailsModalProps {
     isOpen: boolean;
@@ -53,9 +54,10 @@ interface EventData {
     details_lineup?: EventDetails;
 }
 
-export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, onClose, event }) => {
-    // const { user } = useAuth();
+export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, onClose, event, onUpdate, onEventUpdate }) => {
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = React.useState('info');
+    const [isUpdating, setIsUpdating] = React.useState(false);
 
     // Reset tab to 'info' when modal opens
     React.useEffect(() => {
@@ -66,6 +68,25 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
 
     const handlePrint = () => {
         window.print();
+    };
+
+    const handleStatusUpdate = async (newStatus: string) => {
+        if (!event || isUpdating) return;
+
+        try {
+            setIsUpdating(true);
+            const response = await api.put(`/events/${event.id}`, { status: newStatus });
+
+            if (response.data) {
+                if (onEventUpdate) onEventUpdate(response.data);
+                if (onUpdate) onUpdate();
+            }
+        } catch (error) {
+            console.error('Erro ao atualizar status do evento:', error);
+            alert('Não foi possível atualizar o status do evento.');
+        } finally {
+            setIsUpdating(false);
+        }
     };
 
     const getStatusInfo = (status: string) => {
@@ -140,9 +161,6 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
             {/* Modal Content */}
             <div className="relative w-full max-w-3xl bg-[var(--bg-sidebar)] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] print:shadow-none print:w-full print:max-w-none print:m-0 print:rounded-none">
 
-
-
-
                 {/* Header */}
                 <div className="p-6 border-b border-[var(--border-main)] flex items-center justify-between bg-[var(--bg-sidebar)] print:hidden shrink-0">
                     <div className="flex items-center space-x-3">
@@ -151,11 +169,12 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                         </div>
                         <div>
                             <h3 className="text-lg font-bold text-[var(--text-main)]">Detalhes do Evento</h3>
-                            <p className="text-xs text-[var(--text-muted)] uppercase font-bold tracking-wider">Visualização somente leitura</p>
+                            <p className="text-xs text-[var(--text-muted)] uppercase font-bold tracking-wider">
+                                {user?.role === 'admin' ? 'Gerenciamento Administrativo' : 'Visualização somente leitura'}
+                            </p>
                         </div>
                     </div>
                     <div className="flex items-center space-x-2">
-
                         <button
                             onClick={handlePrint}
                             className="flex items-center space-x-2 p-2 px-3 bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg transition-all border border-primary-200"
@@ -504,11 +523,43 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                     <div className="flex space-x-3">
                         <button
                             onClick={handlePrint}
-                            className="flex items-center space-x-2 px-5 py-2 bg-primary-600 text-white rounded-xl text-sm font-bold hover:bg-primary-700 transition-all shadow-sm"
+                            className="flex items-center space-x-2 px-5 py-2 bg-primary-50 text-primary-700 rounded-xl text-sm font-bold hover:bg-primary-100 transition-all border border-primary-200"
                         >
                             <Printer size={18} />
                             <span>Imprimir</span>
                         </button>
+
+                        {!isBefore(parseISO(event.date), startOfDay(new Date())) && user?.role === 'admin' && event.status === 'pending' && (
+                            <>
+                                <button
+                                    onClick={() => handleStatusUpdate('cancelled')}
+                                    disabled={isUpdating}
+                                    className="flex items-center space-x-2 px-5 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition-all border border-red-200 disabled:opacity-50"
+                                >
+                                    <XCircle size={18} />
+                                    <span>Recusar</span>
+                                </button>
+                                <button
+                                    onClick={() => handleStatusUpdate('confirmed')}
+                                    disabled={isUpdating}
+                                    className="flex items-center space-x-2 px-5 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 transition-all shadow-sm disabled:opacity-50"
+                                >
+                                    <Check size={18} />
+                                    <span>Confirmar Evento</span>
+                                </button>
+                            </>
+                        )}
+
+                        {!isBefore(parseISO(event.date), startOfDay(new Date())) && user?.role === 'admin' && event.status === 'confirmed' && (
+                            <button
+                                onClick={() => handleStatusUpdate('cancelled')}
+                                disabled={isUpdating}
+                                className="flex items-center space-x-2 px-5 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition-all border border-red-200 disabled:opacity-50"
+                            >
+                                <XCircle size={18} />
+                                <span>Cancelar Agendamento</span>
+                            </button>
+                        )}
                     </div>
                 </div>
 

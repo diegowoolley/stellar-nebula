@@ -1,5 +1,6 @@
 node_modules
-.env
+.env*
+!.env.example
 dist
 *.log
 .DS_Store
@@ -9,5 +10,3 @@ build
 *.swp
 *.swo
 *~
-.env.local
-.env.production

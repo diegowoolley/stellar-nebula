@@ -1,9 +1,8 @@
 import { Router } from 'express';
-import type { Response } from 'express';
-import { supabase } from '../db.js';
+import { EventController } from '../controllers/EventController.js';
 import { authenticateUser, authorizeRole } from '../middleware/auth.js';
-import type { AuthRequest } from '../middleware/auth.js';
 import multer from 'multer';
+import { supabase } from '../db.js';
 
 const router = Router();
 
@@ -22,158 +21,28 @@ const upload = multer({
     }
 });
 
-// BUSCAR lista de eventos pendentes (com limite opcional)
-router.get('/pending', authenticateUser, async (req: AuthRequest, res: Response) => {
-    const { data, error } = await supabase
-        .from('events')
-        .select(`
-            id,
-            event_name,
-            date,
-            status,
-            artists (name),
-            contractors (name)
-        `)
-        .eq('status', 'pending')
-        .order('date', { ascending: true })
-        .limit(10); // Limita a 10 para o dropdown
-
-    if (error) return res.status(500).json({ error: error.message });
-    res.json(data);
-});
+// BUSCAR lista de eventos pendentes
+router.get('/pending', authenticateUser, EventController.getPendingEvents);
 
 // BUSCAR contagem de eventos pendentes
-router.get('/pending-count', authenticateUser, async (req: AuthRequest, res: Response) => {
-    const { count, error } = await supabase
-        .from('events')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending');
-
-    if (error) return res.status(500).json({ error: error.message });
-    res.json({ count });
-});
+router.get('/pending-count', authenticateUser, EventController.getPendingCount);
 
 // BUSCAR todos os eventos
-router.get('/', authenticateUser, async (req: AuthRequest, res: Response) => {
-    const { data, error } = await supabase
-        .from('events')
-        .select(`
-      *,
-      artists (name, logo_url),
-      contractors (name)
-    `)
-        .order('date', { ascending: true });
-
-    if (error) return res.status(500).json({ error: error.message });
-    res.json(data);
-});
+router.get('/', authenticateUser, EventController.getAllEvents);
 
 // BUSCAR evento único por ID
-router.get('/:id', authenticateUser, async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
-    const { data, error } = await supabase
-        .from('events')
-        .select(`
-      *,
-      artists (name, logo_url),
-      contractors (name)
-    `)
-        .eq('id', id)
-        .single();
-
-    if (error) return res.status(404).json({ error: 'Evento não encontrado.' });
-    res.json(data);
-});
+router.get('/:id', authenticateUser, EventController.getEventById);
 
 // CRIAR evento
-router.post('/', authenticateUser, authorizeRole(['admin', 'producer']), async (req: AuthRequest, res: Response) => {
-    const {
-        artist_id, contractor_id, city, state, date, type, status,
-        event_name, venue_name, contract_url,
-        details_contacts, details_suppliers, details_transports,
-        details_lodging, details_lineup
-    } = req.body;
-
-    const { data, error } = await supabase
-        .from('events')
-        .insert({
-            artist_id,
-            contractor_id,
-            city,
-            state,
-            date,
-            type,
-            status,
-            event_name,
-            venue_name,
-            contract_url,
-            details_contacts,
-            details_suppliers,
-            details_transports,
-            details_lodging,
-            details_lineup,
-            created_by: req.user.id
-        })
-        .select()
-        .single();
-
-    if (error) return res.status(400).json({ error: error.message });
-    res.status(201).json(data);
-});
+router.post('/', authenticateUser, authorizeRole(['admin', 'producer']), EventController.createEvent);
 
 // ATUALIZAR evento
-router.put('/:id', authenticateUser, authorizeRole(['admin', 'producer']), async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
-    const { updated_at, ...updates } = req.body;
-
-    const { data, error } = await supabase
-        .from('events')
-        .update({ ...updates, updated_at: new Date() })
-        .eq('id', id)
-        .select()
-        .single();
-
-    if (error) return res.status(400).json({ error: error.message });
-    res.json(data);
-});
+router.put('/:id', authenticateUser, authorizeRole(['admin', 'producer']), EventController.updateEvent);
 
 // DELETAR evento
-router.delete('/:id', authenticateUser, authorizeRole(['admin']), async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
-    const { error } = await supabase.from('events').delete().eq('id', id);
-    if (error) return res.status(400).json({ error: error.message });
-    res.status(204).send();
-});
+router.delete('/:id', authenticateUser, authorizeRole(['admin']), EventController.deleteEvent);
 
 // UPLOAD de contrato (PDF)
-router.post('/upload-contract', authenticateUser, authorizeRole(['admin', 'producer']), upload.single('file'), async (req: AuthRequest, res: Response) => {
-    if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
-
-    const file = req.file;
-    const fileName = `contract-${Math.random().toString(36).substring(2)}-${Date.now()}.pdf`;
-    const filePath = `contracts/${fileName}`;
-
-    try {
-        // Garantir que o bucket existe
-        await supabase.storage.createBucket('event-contracts', { public: true });
-
-        const { data, error } = await supabase.storage
-            .from('event-contracts')
-            .upload(filePath, file.buffer, {
-                contentType: 'application/pdf',
-                upsert: true
-            });
-
-        if (error) throw error;
-
-        const { data: { publicUrl } } = supabase.storage
-            .from('event-contracts')
-            .getPublicUrl(filePath);
-
-        res.json({ url: publicUrl });
-    } catch (error: any) {
-        res.status(500).json({ error: error.message || 'Erro no upload do contrato.' });
-    }
-});
+router.post('/upload-contract', authenticateUser, authorizeRole(['admin', 'producer']), upload.single('file'), EventController.uploadContract);
 
 export default router;
