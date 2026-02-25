@@ -641,12 +641,12 @@ export const NewEvent = () => {
                                     )}
                                 </div>
 
-                                <div className="mt-8 pt-6 border-t border-[var(--border-main)] flex justify-end space-x-3">
-                                    <button type="button" onClick={() => navigate(-1)} className="px-6 py-2 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">Cancelar</button>
+                                <div className="mt-8 p-4 sm:p-6 sm:mt-8 border-t border-[var(--border-main)] flex flex-col sm:flex-row justify-end items-center gap-3 bg-[var(--bg-main)]">
+                                    <button type="button" onClick={() => navigate(-1)} className="w-full sm:w-auto px-6 py-2 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors order-last sm:order-first">Cancelar</button>
                                     <button
                                         type="submit"
                                         disabled={isSubmitting || isUploading}
-                                        className="btn-primary flex items-center space-x-2 shadow-sm"
+                                        className="btn-primary w-full sm:w-auto flex items-center justify-center space-x-2 shadow-sm"
                                     >
                                         <Save size={18} />
                                         <span>{isSubmitting ? 'Salvando...' : 'Salvar Agendamento'}</span>

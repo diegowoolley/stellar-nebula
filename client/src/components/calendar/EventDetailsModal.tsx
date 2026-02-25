@@ -11,7 +11,12 @@ import {
     CheckCircle2,
     Clock3,
     XCircle,
-    Check
+    Check,
+    Info,
+    Users,
+    Mic2,
+    Truck,
+    Hotel
 } from 'lucide-react';
 import { format, parseISO, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -109,11 +114,11 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
     const statusInfo = getStatusInfo(event.status);
 
     const tabs = [
-        { id: 'info', label: 'Geral', icon: FileText },
-        { id: 'contacts', label: 'Contatos', icon: User },
-        { id: 'suppliers', label: 'Técnica', icon: Briefcase }, // Using Briefcase as generic, or import Mic2
-        { id: 'transports', label: 'Logística', icon: Briefcase }, // Using Briefcase or maybe MapPin?
-        { id: 'lodging', label: 'Hospedagem', icon: Briefcase }, // Using Briefcase
+        { id: 'info', label: 'Informações', icon: Info },
+        { id: 'contacts', label: 'Contatos', icon: Users },
+        { id: 'suppliers', label: 'Fornecedores', icon: Mic2 },
+        { id: 'transports', label: 'Transporte', icon: Truck },
+        { id: 'lodging', label: 'Hospedagem', icon: Hotel },
         { id: 'lineup', label: 'Line-up', icon: Clock },
     ];
 
@@ -349,7 +354,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
 
                                 <div className="space-y-6">
                                     <h4 className="flex items-center text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border-main)] pb-2 mb-4 print:hidden">
-                                        <User size={14} className="mr-2 text-primary-500" /> Produção & Equipe
+                                        <Users size={14} className="mr-2 text-primary-500" /> Produção & Equipe
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2">
                                         {[
@@ -384,7 +389,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
 
                                 <div className="space-y-6">
                                     <h4 className="flex items-center text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border-main)] pb-2 mb-4 print:hidden">
-                                        <Briefcase size={14} className="mr-2 text-primary-500" /> Fornecedores Técnicos
+                                        <Mic2 size={14} className="mr-2 text-primary-500" /> Fornecedores Técnicos
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2">
                                         {[
@@ -419,7 +424,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
 
                                 <div className="space-y-6">
                                     <h4 className="flex items-center text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border-main)] pb-2 mb-4 print:hidden">
-                                        <Briefcase size={14} className="mr-2 text-primary-500" /> Logística
+                                        <Truck size={14} className="mr-2 text-primary-500" /> Transporte
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2">
                                         {[
@@ -454,7 +459,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
 
                                 <div className="space-y-6">
                                     <h4 className="flex items-center text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border-main)] pb-2 mb-4 print:hidden">
-                                        <Briefcase size={14} className="mr-2 text-primary-500" /> Hospedagem
+                                        <Hotel size={14} className="mr-2 text-primary-500" /> Hospedagem
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2">
                                         {[
@@ -537,17 +542,17 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-6 bg-[var(--bg-main)] border-t border-[var(--border-main)] flex justify-between items-center print:hidden shrink-0">
+                <div className="p-4 sm:p-6 bg-[var(--bg-main)] border-t border-[var(--border-main)] flex flex-col sm:flex-row justify-between items-center gap-4 print:hidden shrink-0">
                     <button
                         onClick={onClose}
-                        className="px-6 py-2 text-sm font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
+                        className="w-full sm:w-auto px-6 py-2 text-sm font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors order-last sm:order-first"
                     >
                         Fechar
                     </button>
-                    <div className="flex space-x-3">
+                    <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3">
                         <button
                             onClick={handlePrint}
-                            className="flex items-center space-x-2 px-5 py-2 bg-primary-50 text-primary-700 rounded-xl text-sm font-bold hover:bg-primary-100 transition-all border border-primary-200"
+                            className="flex items-center justify-center space-x-2 w-full sm:w-auto px-5 py-2 bg-primary-50 text-primary-700 rounded-xl text-sm font-bold hover:bg-primary-100 transition-all border border-primary-200"
                         >
                             <Printer size={18} />
                             <span>Imprimir</span>
@@ -558,7 +563,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                                 <button
                                     onClick={() => handleStatusUpdate('cancelled')}
                                     disabled={isUpdating}
-                                    className="flex items-center space-x-2 px-5 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition-all border border-red-200 disabled:opacity-50"
+                                    className="flex items-center justify-center space-x-2 w-full sm:w-auto px-5 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition-all border border-red-200 disabled:opacity-50"
                                 >
                                     <XCircle size={18} />
                                     <span>Recusar</span>
@@ -566,7 +571,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                                 <button
                                     onClick={() => handleStatusUpdate('confirmed')}
                                     disabled={isUpdating}
-                                    className="flex items-center space-x-2 px-5 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 transition-all shadow-sm disabled:opacity-50"
+                                    className="flex items-center justify-center space-x-2 w-full sm:w-auto px-5 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 transition-all shadow-sm disabled:opacity-50"
                                 >
                                     <Check size={18} />
                                     <span>Confirmar Evento</span>
@@ -578,7 +583,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                             <button
                                 onClick={() => handleStatusUpdate('cancelled')}
                                 disabled={isUpdating}
-                                className="flex items-center space-x-2 px-5 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition-all border border-red-200 disabled:opacity-50"
+                                className="flex items-center justify-center space-x-2 w-full sm:w-auto px-5 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition-all border border-red-200 disabled:opacity-50"
                             >
                                 <XCircle size={18} />
                                 <span>Cancelar Agendamento</span>

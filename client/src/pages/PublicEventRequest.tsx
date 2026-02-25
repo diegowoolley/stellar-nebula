@@ -517,7 +517,7 @@ export const ExternalRequest = () => {
                         </div>
 
                         {/* Public Footer */}
-                        <div className="p-6 bg-[var(--bg-main)] border-t border-[var(--border-main)] flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="p-4 sm:p-6 bg-[var(--bg-main)] border-t border-[var(--border-main)] flex flex-col sm:flex-row items-center justify-between gap-4">
                             <p className="text-[10px] text-[var(--text-muted)] text-center sm:text-left font-medium">
                                 Ao enviar, você declara que os dados são verídicos.<br />A solicitação será analisada pela nossa equipe.
                             </p>

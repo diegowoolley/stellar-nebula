@@ -53,7 +53,7 @@ export const AppLayout = () => {
                 <div className="flex flex-col flex-1 min-h-0">
                     {/* Logo e Nome do Sistema */}
                     <div className="flex items-center h-16 px-6 border-b border-[var(--border-main)] py-2">
-                        <div className="h-[40px] w-[50px] bg-white rounded-lg shadow-[0_8px_16px_rgba(0,0,0,0.5)] flex items-center justify-center p-1 mr-3 shrink-0">
+                        <div className="h-[40px] w-[50px] bg-white rounded-lg shadow-sm flex items-center justify-center p-1 mr-3 shrink-0 border border-[var(--border-main)]/50">
                             <img src="/logo.png" alt="Dw Sistemas Logo" className="h-full w-full object-contain" />
                         </div>
                         <span className="text-lg font-bold tracking-tight text-[var(--text-main)] truncate">Dw <span className="text-primary-600">Sistemas</span></span>
@@ -97,7 +97,7 @@ export const AppLayout = () => {
             {/* Cabeçalho para Mobile */}
             <div className="lg:hidden flex items-center justify-between bg-[var(--bg-sidebar)] border-b border-[var(--border-main)] h-16 px-4 py-2">
                 <div className="flex items-center">
-                    <div className="h-[36px] w-[46px] bg-white rounded-lg shadow-[0_8px_16px_rgba(0,0,0,0.5)] flex items-center justify-center p-1 mr-3 shrink-0">
+                    <div className="h-[36px] w-[46px] bg-white rounded-lg shadow-sm flex items-center justify-center p-1 mr-3 shrink-0 border border-[var(--border-main)]/50">
                         <img src="/logo.png" alt="Dw Sistemas Logo" className="h-full w-full object-contain" />
                     </div>
                     <span className="text-[1.1rem] font-bold tracking-tight text-[var(--text-main)] whitespace-nowrap">Dw <span className="text-primary-600">Sistemas</span></span>
