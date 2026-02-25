@@ -288,8 +288,8 @@ export const Finance = () => {
                             ))}
                         </select>
                     </div>
-                    <div className="flex gap-2 items-end">
-                        <div className="w-36">
+                    <div className="flex flex-wrap gap-2 items-end w-full md:w-auto">
+                        <div className="flex-1 min-w-[130px] sm:w-36">
                             <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase mb-1">De</label>
                             <input
                                 type="date"
@@ -298,7 +298,7 @@ export const Finance = () => {
                                 onChange={(e) => setStartDate(e.target.value)}
                             />
                         </div>
-                        <div className="w-36">
+                        <div className="flex-1 min-w-[130px] sm:w-36">
                             <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase mb-1">Até</label>
                             <input
                                 type="date"
