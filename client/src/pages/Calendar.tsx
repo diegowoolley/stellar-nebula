@@ -641,16 +641,6 @@ export const Calendar = () => {
                                                             {!isBefore(parseISO(event.date), startOfDay(new Date())) && (user?.role === 'admin' || user?.role === 'producer') && (
                                                                 <div className="flex items-center gap-3 mt-2">
                                                                     <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            navigate('/events/new', { state: { initialDate: event.date } });
-                                                                        }}
-                                                                        className="p-2.5 bg-primary-500/10 text-primary-600 rounded-lg hover:bg-primary-500/20 border border-primary-500/20 transition-colors"
-                                                                        title="Novo Evento"
-                                                                    >
-                                                                        <Plus size={18} strokeWidth={2.5} />
-                                                                    </button>
-                                                                    <button
                                                                         onClick={(e) => handleEditClick(e, event.id)}
                                                                         className="p-2.5 bg-[var(--bg-sidebar)] rounded-lg text-[var(--text-main)] hover:bg-[var(--bg-main)] border border-[var(--border-main)] transition-colors"
                                                                         title="Editar"

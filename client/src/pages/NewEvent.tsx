@@ -4,7 +4,7 @@ import api from '../services/api';
 import {
     Users, Truck, Info, Clock,
     Save, X, FileText, Upload,
-    Hotel, Mic2
+    Hotel, Mic2, Plus
 } from 'lucide-react';
 import { maskPhone } from '../utils/format';
 import clsx from 'clsx';
@@ -332,265 +332,329 @@ export const NewEvent = () => {
                 </button>
             </div>
 
-            <div className="flex flex-col gap-6">
-                {/* Tabs Navigation (Horizontal) */}
-                <div className="w-full bg-[var(--bg-sidebar)] p-1 rounded-xl border border-[var(--border-main)] shadow-sm overflow-x-auto">
-                    <div className="flex space-x-1 min-w-max">
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={clsx(
-                                    "flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap",
-                                    activeTab === tab.id
-                                        ? "bg-primary-600 text-white shadow-md shadow-primary-500/20"
-                                        : "text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-[var(--text-main)]"
-                                )}
-                            >
-                                <tab.icon size={16} />
-                                <span>{tab.label}</span>
-                            </button>
-                        ))}
+            <div className="flex flex-row gap-4 sm:gap-6 items-start relative pb-20 sm:pb-0">
+                {/* Mobile Side Menu / Desktop Sidebar */}
+                <div className="w-14 sm:w-56 shrink-0 sticky top-[80px] z-10 bg-[var(--bg-sidebar)] sm:bg-transparent rounded-2xl sm:rounded-none border sm:border-0 border-[var(--border-main)] shadow-sm sm:shadow-none p-1.5 sm:p-0">
+                    <div className="flex flex-col gap-1 sm:gap-2">
+                        {tabs.map((tab) => {
+                            const isActive = activeTab === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={clsx(
+                                        "flex items-center justify-center sm:justify-start space-x-0 sm:space-x-3 w-full h-12 sm:h-auto sm:px-4 sm:py-3 rounded-xl transition-all group relative overflow-hidden",
+                                        isActive
+                                            ? "bg-primary-600 sm:bg-primary-500/10 text-white sm:text-primary-600 shadow-md sm:shadow-none sm:border-l-4 sm:border-primary-600 font-bold"
+                                            : "text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-[var(--text-main)]"
+                                    )}
+                                    title={tab.label}
+                                >
+                                    <tab.icon size={20} className={clsx(isActive ? "text-white sm:text-primary-600" : "text-[var(--text-muted)] group-hover:text-primary-500 transition-colors")} />
+                                    <span className="hidden sm:block text-sm whitespace-nowrap">{tab.label}</span>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
-                {/* File Upload Section (Moved to be less intrusive, or keep in sidebar? moving to form bottom or top) */}
-                {/* For horizontal layout, maybe put contract upload inside 'Informações' or a separate mini-header */}
-
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    {/* Main Form Content */}
-                    <div className="lg:col-span-3">
-                        <form onSubmit={handleSubmit} className="card p-6">
-                            <div className="min-h-[400px]">
-                                {activeTab === 'info' && (
-                                    <div className="space-y-6">
-                                        <div className="flex items-center justify-between border-b border-[var(--border-main)] pb-4">
-                                            <h2 className="font-bold text-[var(--text-main)] flex items-center">
-                                                <Info size={18} className="mr-2 text-primary-500" /> Informações Gerais
-                                            </h2>
-                                            {/* Contract Upload Mini Widget */}
-                                            <div className="flex items-center space-x-2">
-                                                {formData.contract_url ? (
-                                                    <div className="flex items-center text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200">
-                                                        <FileText size={12} className="mr-1" />
-                                                        <a href={formData.contract_url} target="_blank" rel="noreferrer" className="font-bold hover:underline">Contrato Anexado</a>
-                                                        <button type="button" onClick={() => setFormData({ ...formData, contract_url: '' })} className="ml-2 text-green-800 hover:text-red-500"><X size={12} /></button>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="application/pdf" className="hidden" />
-                                                        <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="text-xs flex items-center bg-[var(--bg-main)] hover:bg-[var(--bg-sidebar)] border border-[var(--border-main)] px-3 py-1.5 rounded-lg transition-colors font-semibold text-[var(--text-muted)] hover:text-[var(--text-main)]">
-                                                            <Upload size={12} className="mr-1.5" /> {isUploading ? 'Enviando...' : 'Anexar Contrato (PDF)'}
-                                                        </button>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <label className="text-xs font-bold text-[var(--text-muted)] uppercase">Artista</label>
-                                                <select
-                                                    required
-                                                    value={formData.artist_id}
-                                                    onChange={(e) => setFormData({ ...formData, artist_id: e.target.value })}
-                                                    className="input-field"
-                                                >
-                                                    <option value="">Selecione...</option>
-                                                    {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                                                </select>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs font-bold text-[var(--text-muted)] uppercase">Contratante</label>
-                                                <select
-                                                    value={formData.contractor_id}
-                                                    onChange={(e) => setFormData({ ...formData, contractor_id: e.target.value })}
-                                                    className="input-field"
-                                                >
-                                                    <option value="">Selecione...</option>
-                                                    {contractors.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                                </select>
-                                            </div>
-                                            <InputField label="Nome do Evento" value={formData.event_name} onChange={(val: any) => setFormData({ ...formData, event_name: val })} placeholder="Opcional: Nome específico do show" />
-                                            <InputField label="Data e Hora" type="datetime-local" required value={formData.date} onChange={(val: any) => setFormData({ ...formData, date: val })} />
-                                            <InputField label="Local" value={formData.venue_name} onChange={(val: any) => setFormData({ ...formData, venue_name: val })} placeholder="Ex: Teatro Municipal" />
-                                            <div className="flex gap-4">
-                                                <div className="flex-1"><InputField label="Cidade" value={formData.city} onChange={(val: any) => setFormData({ ...formData, city: val })} /></div>
-                                                <div className="w-28 space-y-1">
-                                                    <label className="text-xs font-bold text-[var(--text-muted)] uppercase">UF</label>
-                                                    <select
-                                                        value={formData.state}
-                                                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                                                        className="input-field"
-                                                    >
-                                                        <option value="">UF</option>
-                                                        {['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'].map(uf => (
-                                                            <option key={uf} value={uf}>{uf}</option>
-                                                        ))}
-                                                    </select>
+                {/* Main Form Content */}
+                <div className="flex-1 w-full max-w-full overflow-hidden">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <div className="lg:col-span-3">
+                            <form onSubmit={handleSubmit} className="card p-6">
+                                <div className="min-h-[400px]">
+                                    {activeTab === 'info' && (
+                                        <div className="space-y-6">
+                                            <div className="flex items-center justify-between border-b border-[var(--border-main)] pb-4">
+                                                <h2 className="font-bold text-[var(--text-main)] flex items-center">
+                                                    <Info size={18} className="mr-2 text-primary-500" /> Informações Gerais
+                                                </h2>
+                                                {/* Contract Upload Mini Widget */}
+                                                <div className="flex items-center space-x-2">
+                                                    {formData.contract_url ? (
+                                                        <div className="flex items-center text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200">
+                                                            <FileText size={12} className="mr-1" />
+                                                            <a href={formData.contract_url} target="_blank" rel="noreferrer" className="font-bold hover:underline">Contrato Anexado</a>
+                                                            <button type="button" onClick={() => setFormData({ ...formData, contract_url: '' })} className="ml-2 text-green-800 hover:text-red-500"><X size={12} /></button>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="application/pdf" className="hidden" />
+                                                            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="text-xs flex items-center bg-[var(--bg-main)] hover:bg-[var(--bg-sidebar)] border border-[var(--border-main)] px-3 py-1.5 rounded-lg transition-colors font-semibold text-[var(--text-muted)] hover:text-[var(--text-main)]">
+                                                                <Upload size={12} className="mr-1.5" /> {isUploading ? 'Enviando...' : 'Anexar Contrato (PDF)'}
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </div>
 
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-bold text-[var(--text-muted)] uppercase">Artista</label>
+                                                    <select
+                                                        required
+                                                        value={formData.artist_id}
+                                                        onChange={(e) => setFormData({ ...formData, artist_id: e.target.value })}
+                                                        className="input-field"
+                                                    >
+                                                        <option value="">Selecione...</option>
+                                                        {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-bold text-[var(--text-muted)] uppercase">Contratante</label>
+                                                    <select
+                                                        value={formData.contractor_id}
+                                                        onChange={(e) => setFormData({ ...formData, contractor_id: e.target.value })}
+                                                        className="input-field"
+                                                    >
+                                                        <option value="">Selecione...</option>
+                                                        {contractors.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                    </select>
+                                                </div>
+                                                <InputField label="Nome do Evento" value={formData.event_name} onChange={(val: any) => setFormData({ ...formData, event_name: val })} placeholder="Opcional: Nome específico do show" />
+                                                <InputField label="Data e Hora" type="datetime-local" required value={formData.date} onChange={(val: any) => setFormData({ ...formData, date: val })} />
+                                                <InputField label="Local" value={formData.venue_name} onChange={(val: any) => setFormData({ ...formData, venue_name: val })} placeholder="Ex: Teatro Municipal" />
+                                                <div className="flex gap-4">
+                                                    <div className="flex-1"><InputField label="Cidade" value={formData.city} onChange={(val: any) => setFormData({ ...formData, city: val })} /></div>
+                                                    <div className="w-28 space-y-1">
+                                                        <label className="text-xs font-bold text-[var(--text-muted)] uppercase">UF</label>
+                                                        <select
+                                                            value={formData.state}
+                                                            onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                                                            className="input-field"
+                                                        >
+                                                            <option value="">UF</option>
+                                                            {['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'].map(uf => (
+                                                                <option key={uf} value={uf}>{uf}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
 
-                                        </div>
-                                    </div>
-                                )}
 
-                                {activeTab === 'contacts' && (
-                                    <div className="space-y-6">
-                                        <h2 className="font-bold text-[var(--text-main)] flex items-center border-b border-[var(--border-main)] pb-2">
-                                            <Users size={18} className="mr-2 text-primary-500" /> Contatos da Produção
-                                        </h2>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {Object.keys(formData.details_contacts).map((key) => (
-                                                <ContactInput
-                                                    key={key}
-                                                    label={key.replace(/_/g, ' ')}
-                                                    value={(formData.details_contacts as any)[key]}
-                                                    onChange={(v) => setFormData({ ...formData, details_contacts: { ...formData.details_contacts, [key]: v } })}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {activeTab === 'suppliers' && (
-                                    <div className="space-y-6">
-                                        <h2 className="font-bold text-[var(--text-main)] flex items-center border-b border-[var(--border-main)] pb-2">
-                                            <Mic2 size={18} className="mr-2 text-primary-500" /> Fornecedores Técnicos
-                                        </h2>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {Object.keys(formData.details_suppliers).map((key) => (
-                                                <ContactInput
-                                                    key={key}
-                                                    label={key.replace(/_/g, ' ')}
-                                                    value={(formData.details_suppliers as any)[key]}
-                                                    onChange={(v) => setFormData({ ...formData, details_suppliers: { ...formData.details_suppliers, [key]: v } })}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {activeTab === 'transports' && (
-                                    <div className="space-y-6">
-                                        <h2 className="font-bold text-[var(--text-main)] flex items-center border-b border-[var(--border-main)] pb-2">
-                                            <Truck size={18} className="mr-2 text-primary-500" /> Logística & Transporte
-                                        </h2>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {Object.keys(formData.details_transports).map((key) => (
-                                                <ContactInput
-                                                    key={key}
-                                                    label={key.replace(/_/g, ' ')}
-                                                    value={(formData.details_transports as any)[key]}
-                                                    onChange={(v) => setFormData({ ...formData, details_transports: { ...formData.details_transports, [key]: v } })}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {activeTab === 'lodging' && (
-                                    <div className="space-y-6">
-                                        <h2 className="font-bold text-[var(--text-main)] flex items-center border-b border-[var(--border-main)] pb-2">
-                                            <Hotel size={18} className="mr-2 text-primary-500" /> Hospedagem
-                                        </h2>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <ContactInput
-                                                label="Contato Hotel"
-                                                value={(formData.details_lodging as any).contato_hotel}
-                                                onChange={(v) => setFormData({ ...formData, details_lodging: { ...formData.details_lodging, contato_hotel: v } })}
-                                            />
-                                            <ContactInput
-                                                label="Nome Hotel"
-                                                value={(formData.details_lodging as any).nome_hotel}
-                                                onChange={(v) => setFormData({ ...formData, details_lodging: { ...formData.details_lodging, nome_hotel: v } })}
-                                            />
-                                            <div className="md:col-span-2">
-                                                <InputField
-                                                    label="Cidade Hospedagem"
-                                                    value={(formData.details_lodging as any).cidade_hospedagem}
-                                                    onChange={(v: any) => setFormData({ ...formData, details_lodging: { ...formData.details_lodging, cidade_hospedagem: v } })}
-                                                    placeholder="Cidade onde será a hospedagem"
-                                                />
                                             </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                {activeTab === 'lineup' && (
-                                    <div className="space-y-6">
-                                        <h2 className="font-bold text-[var(--text-main)] flex items-center border-b border-[var(--border-main)] pb-2">
-                                            <Clock size={18} className="mr-2 text-primary-500" /> Line-up / Atrações
-                                        </h2>
-                                        <div className="space-y-3 max-w-lg">
-                                            {[1, 2, 3, 4, 5].map((num) => {
-                                                const key = `atracao${num}`;
-                                                const value = (formData.details_lineup as any)[key];
-                                                // Handle legacy string or new object
-                                                const time = typeof value === 'object' ? value?.time || '' : '';
-                                                const name = typeof value === 'object' ? value?.name || '' : (typeof value === 'string' ? value : '');
-
-                                                return (
-                                                    <div key={num} className="space-y-1">
-                                                        <label className="text-xs font-bold text-[var(--text-muted)] uppercase">Atração {num}</label>
-                                                        <div className="flex gap-2">
-                                                            <input
-                                                                type="time"
-                                                                className="input-field w-24"
-                                                                value={time}
-                                                                onChange={(e) => setFormData({
-                                                                    ...formData,
-                                                                    details_lineup: {
-                                                                        ...formData.details_lineup,
-                                                                        [key]: { time: e.target.value, name }
-                                                                    }
-                                                                })}
-                                                            />
-                                                            <input
-                                                                type="text"
-                                                                className="input-field flex-1"
-                                                                placeholder="Nome do Artista / Banda"
-                                                                value={name}
-                                                                onChange={(e) => setFormData({
-                                                                    ...formData,
-                                                                    details_lineup: {
-                                                                        ...formData.details_lineup,
-                                                                        [key]: { time, name: e.target.value }
-                                                                    }
-                                                                })}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
+                                    {activeTab === 'contacts' && (
+                                        <div className="space-y-6">
+                                            <h2 className="font-bold text-[var(--text-main)] flex items-center border-b border-[var(--border-main)] pb-2">
+                                                <Users size={18} className="mr-2 text-primary-500" /> Contatos da Produção
+                                            </h2>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {Object.keys(formData.details_contacts).map((key) => (
+                                                    <ContactInput
+                                                        key={key}
+                                                        label={key.replace(/_/g, ' ')}
+                                                        value={(formData.details_contacts as any)[key]}
+                                                        onChange={(v) => setFormData({ ...formData, details_contacts: { ...formData.details_contacts, [key]: v } })}
+                                                    />
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
+                                    )}
 
-                            <div className="mt-8 pt-6 border-t border-[var(--border-main)] flex justify-end space-x-3">
-                                <button type="button" onClick={() => navigate(-1)} className="px-6 py-2 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">Cancelar</button>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting || isUploading}
-                                    className="btn-primary flex items-center space-x-2 shadow-sm"
-                                >
-                                    <Save size={18} />
-                                    <span>{isSubmitting ? 'Salvando...' : 'Salvar Agendamento'}</span>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                                    {activeTab === 'suppliers' && (
+                                        <div className="space-y-6">
+                                            <h2 className="font-bold text-[var(--text-main)] flex items-center border-b border-[var(--border-main)] pb-2">
+                                                <Mic2 size={18} className="mr-2 text-primary-500" /> Fornecedores Técnicos
+                                            </h2>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {Object.keys(formData.details_suppliers).map((key) => (
+                                                    <ContactInput
+                                                        key={key}
+                                                        label={key.replace(/_/g, ' ')}
+                                                        value={(formData.details_suppliers as any)[key]}
+                                                        onChange={(v) => setFormData({ ...formData, details_suppliers: { ...formData.details_suppliers, [key]: v } })}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
 
-                    {/* Helper / Summary Sidebar (Optional) */}
-                    <div className="hidden lg:block space-y-4">
-                        <div className="card p-4 bg-[var(--bg-sidebar)]">
-                            <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-3">Resumo</h3>
-                            <div className="space-y-2 text-sm">
-                                <p className="flex justify-between"><span className="text-[var(--text-muted)]">Data:</span> <span className="font-bold">{formData.date ? new Date(formData.date).toLocaleDateString('pt-BR') : '-'}</span></p>
-                                <p className="flex justify-between"><span className="text-[var(--text-muted)]">Local:</span> <span className="font-bold text-right truncate ml-2">{formData.venue_name || '-'}</span></p>
-                                <p className="flex justify-between"><span className="text-[var(--text-muted)]">Cidade:</span> <span className="font-bold text-right truncate ml-2">{formData.city || '-'}</span></p>
+                                    {activeTab === 'transports' && (
+                                        <div className="space-y-6">
+                                            <h2 className="font-bold text-[var(--text-main)] flex items-center border-b border-[var(--border-main)] pb-2">
+                                                <Truck size={18} className="mr-2 text-primary-500" /> Logística & Transporte
+                                            </h2>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {Object.keys(formData.details_transports).map((key) => (
+                                                    <ContactInput
+                                                        key={key}
+                                                        label={key.replace(/_/g, ' ')}
+                                                        value={(formData.details_transports as any)[key]}
+                                                        onChange={(v) => setFormData({ ...formData, details_transports: { ...formData.details_transports, [key]: v } })}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'lodging' && (
+                                        <div className="space-y-6">
+                                            <h2 className="font-bold text-[var(--text-main)] flex items-center border-b border-[var(--border-main)] pb-2">
+                                                <Hotel size={18} className="mr-2 text-primary-500" /> Hospedagem
+                                            </h2>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <ContactInput
+                                                    label="Contato Hotel"
+                                                    value={(formData.details_lodging as any).contato_hotel}
+                                                    onChange={(v) => setFormData({ ...formData, details_lodging: { ...formData.details_lodging, contato_hotel: v } })}
+                                                />
+                                                <ContactInput
+                                                    label="Nome Hotel"
+                                                    value={(formData.details_lodging as any).nome_hotel}
+                                                    onChange={(v) => setFormData({ ...formData, details_lodging: { ...formData.details_lodging, nome_hotel: v } })}
+                                                />
+                                                <div className="md:col-span-2">
+                                                    <InputField
+                                                        label="Cidade Hospedagem"
+                                                        value={(formData.details_lodging as any).cidade_hospedagem}
+                                                        onChange={(v: any) => setFormData({ ...formData, details_lodging: { ...formData.details_lodging, cidade_hospedagem: v } })}
+                                                        placeholder="Cidade onde será a hospedagem"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'lineup' && (
+                                        <div className="space-y-6">
+                                            <h2 className="font-bold text-[var(--text-main)] flex items-center border-b border-[var(--border-main)] pb-2">
+                                                <Clock size={18} className="mr-2 text-primary-500" /> Line-up / Atrações
+                                            </h2>
+                                            <div className="space-y-4 max-w-lg">
+                                                {(() => {
+                                                    const lineupObj = formData.details_lineup || {};
+                                                    let lineupKeys = Object.keys(lineupObj)
+                                                        .filter(k => k.startsWith('atracao'))
+                                                        .sort((a, b) => {
+                                                            const numA = parseInt(a.replace('atracao', ''), 10) || 0;
+                                                            const numB = parseInt(b.replace('atracao', ''), 10) || 0;
+                                                            return numA - numB;
+                                                        });
+
+                                                    // For backwards compatibility and initial state, always show at least 5
+                                                    if (lineupKeys.length < 5) {
+                                                        const missing = 5 - lineupKeys.length;
+                                                        const maxExisting = Math.max(0, ...lineupKeys.map(k => parseInt(k.replace('atracao', ''), 10) || 0));
+                                                        for (let i = 1; i <= missing; i++) {
+                                                            if (!lineupKeys.includes(`atracao${i}`)) lineupKeys.push(`atracao${i}`);
+                                                        }
+                                                        lineupKeys.sort((a, b) => (parseInt(a.replace('atracao', ''), 10) || 0) - (parseInt(b.replace('atracao', ''), 10) || 0));
+                                                    }
+
+                                                    return (
+                                                        <>
+                                                            <div className="space-y-3">
+                                                                {lineupKeys.map((key, index) => {
+                                                                    const num = parseInt(key.replace('atracao', ''), 10) || index + 1;
+                                                                    const value = (formData.details_lineup as any)[key];
+                                                                    const time = typeof value === 'object' ? value?.time || '' : '';
+                                                                    const name = typeof value === 'object' ? value?.name || '' : (typeof value === 'string' ? value : '');
+
+                                                                    return (
+                                                                        <div key={key} className="space-y-1 relative group">
+                                                                            <div className="flex justify-between items-center">
+                                                                                <label className="text-xs font-bold text-[var(--text-muted)] uppercase">
+                                                                                    Atração {num}
+                                                                                </label>
+                                                                                {lineupKeys.length > 5 && (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => {
+                                                                                            const newDetails = { ...formData.details_lineup };
+                                                                                            delete (newDetails as any)[key];
+                                                                                            setFormData({ ...formData, details_lineup: newDetails });
+                                                                                        }}
+                                                                                        className="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                                                                                        title="Remover atração"
+                                                                                    >
+                                                                                        <X size={14} />
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="flex gap-2">
+                                                                                <input
+                                                                                    type="time"
+                                                                                    className="input-field w-24"
+                                                                                    value={time}
+                                                                                    onChange={(e) => setFormData({
+                                                                                        ...formData,
+                                                                                        details_lineup: {
+                                                                                            ...formData.details_lineup,
+                                                                                            [key]: { time: e.target.value, name }
+                                                                                        }
+                                                                                    })}
+                                                                                />
+                                                                                <input
+                                                                                    type="text"
+                                                                                    className="input-field flex-1"
+                                                                                    placeholder="Nome do Artista / Banda"
+                                                                                    value={name}
+                                                                                    onChange={(e) => setFormData({
+                                                                                        ...formData,
+                                                                                        details_lineup: {
+                                                                                            ...formData.details_lineup,
+                                                                                            [key]: { time, name: e.target.value }
+                                                                                        }
+                                                                                    })}
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const maxNum = Math.max(...lineupKeys.map(k => parseInt(k.replace('atracao', ''), 10) || 0), 0);
+                                                                    const newKey = `atracao${maxNum + 1}`;
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        details_lineup: {
+                                                                            ...formData.details_lineup,
+                                                                            [newKey]: { time: '', name: '' }
+                                                                        }
+                                                                    });
+                                                                }}
+                                                                className="mt-4 flex items-center justify-center w-full sm:w-auto text-sm font-bold text-primary-600 hover:text-primary-700 transition-colors bg-primary-50 hover:bg-primary-100 px-4 py-2.5 rounded-xl border border-primary-200"
+                                                            >
+                                                                <Plus size={16} className="mr-2" strokeWidth={2.5} /> Adicionar Atração
+                                                            </button>
+                                                        </>
+                                                    );
+                                                })()}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mt-8 pt-6 border-t border-[var(--border-main)] flex justify-end space-x-3">
+                                    <button type="button" onClick={() => navigate(-1)} className="px-6 py-2 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">Cancelar</button>
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmitting || isUploading}
+                                        className="btn-primary flex items-center space-x-2 shadow-sm"
+                                    >
+                                        <Save size={18} />
+                                        <span>{isSubmitting ? 'Salvando...' : 'Salvar Agendamento'}</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Helper / Summary Sidebar (Optional) */}
+                        <div className="hidden lg:block space-y-4">
+                            <div className="card p-4 bg-[var(--bg-sidebar)]">
+                                <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest mb-3">Resumo</h3>
+                                <div className="space-y-2 text-sm">
+                                    <p className="flex justify-between"><span className="text-[var(--text-muted)]">Data:</span> <span className="font-bold">{formData.date ? new Date(formData.date).toLocaleDateString('pt-BR') : '-'}</span></p>
+                                    <p className="flex justify-between"><span className="text-[var(--text-muted)]">Local:</span> <span className="font-bold text-right truncate ml-2">{formData.venue_name || '-'}</span></p>
+                                    <p className="flex justify-between"><span className="text-[var(--text-muted)]">Cidade:</span> <span className="font-bold text-right truncate ml-2">{formData.city || '-'}</span></p>
+                                </div>
                             </div>
                         </div>
                     </div>

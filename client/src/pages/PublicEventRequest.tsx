@@ -4,7 +4,7 @@ import axios from 'axios';
 import {
     Users, Truck, Info, Clock,
     Save, CheckCircle2, Music,
-    Hotel, Mic2
+    Hotel, Mic2, Plus, X
 } from 'lucide-react';
 import { maskPhone } from '../utils/format';
 import clsx from 'clsx';
@@ -247,28 +247,34 @@ export const ExternalRequest = () => {
             </div>
 
             <div className="max-w-4xl mx-auto px-4">
-                <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Navigation - Mobile Scroll / Desktop Sidebar */}
-                    <div className="flex lg:flex-col overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 gap-2 lg:w-48 flex-shrink-0">
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={clsx(
-                                    "flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap lg:w-full",
-                                    activeTab === tab.id
-                                        ? "bg-primary-600 text-white shadow-md shadow-primary-500/20"
-                                        : "bg-[var(--bg-sidebar)] text-[var(--text-muted)] border border-[var(--border-main)] hover:border-primary-300"
-                                )}
-                            >
-                                <tab.icon size={14} />
-                                <span>{tab.label}</span>
-                            </button>
-                        ))}
+                <div className="flex flex-row gap-4 sm:gap-6 items-start relative pb-20 sm:pb-0">
+                    {/* Mobile Side Menu / Desktop Sidebar */}
+                    <div className="w-14 lg:w-48 shrink-0 sticky top-[80px] z-10 bg-[var(--bg-sidebar)] sm:bg-transparent rounded-2xl sm:rounded-none border sm:border-0 border-[var(--border-main)] shadow-sm sm:shadow-none p-1.5 sm:p-0">
+                        <div className="flex flex-col gap-1 sm:gap-2">
+                            {tabs.map((tab) => {
+                                const isActive = activeTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={clsx(
+                                            "flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 w-full h-12 lg:h-auto lg:px-4 lg:py-3 rounded-xl transition-all group relative overflow-hidden",
+                                            isActive
+                                                ? "bg-primary-600 lg:bg-primary-500/10 text-white lg:text-primary-600 shadow-md lg:shadow-none lg:border-l-4 lg:border-primary-600 font-bold"
+                                                : "text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-[var(--text-main)]"
+                                        )}
+                                        title={tab.label}
+                                    >
+                                        <tab.icon size={20} className={clsx(isActive ? "text-white lg:text-primary-600" : "text-[var(--text-muted)] group-hover:text-primary-500 transition-colors")} />
+                                        <span className="hidden lg:block text-sm whitespace-nowrap">{tab.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
 
                     {/* Form Container */}
-                    <form onSubmit={handleSubmit} className="flex-1 card overflow-hidden">
+                    <form onSubmit={handleSubmit} className="flex-1 w-full max-w-full overflow-hidden card">
                         <div className="p-6">
                             {activeTab === 'info' && (
                                 <div className="space-y-6">
@@ -404,46 +410,107 @@ export const ExternalRequest = () => {
                                     <h2 className="text-sm font-bold text-[var(--text-main)] border-b border-[var(--border-main)] pb-2 flex items-center">
                                         <Clock size={16} className="mr-2 text-primary-500" /> Programação Estimada
                                     </h2>
-                                    <div className="space-y-3 max-w-lg">
-                                        {[1, 2, 3, 4, 5].map((num) => {
-                                            const key = `atracao${num}`;
-                                            const value = (formData.details_lineup as any)[key];
-                                            const time = typeof value === 'object' ? value?.time || '' : '';
-                                            const name = typeof value === 'object' ? value?.name || '' : (typeof value === 'string' ? value : '');
+                                    <div className="space-y-4 max-w-lg">
+                                        {(() => {
+                                            const lineupObj = formData.details_lineup || {};
+                                            let lineupKeys = Object.keys(lineupObj)
+                                                .filter(k => k.startsWith('atracao'))
+                                                .sort((a, b) => {
+                                                    const numA = parseInt(a.replace('atracao', ''), 10) || 0;
+                                                    const numB = parseInt(b.replace('atracao', ''), 10) || 0;
+                                                    return numA - numB;
+                                                });
+
+                                            // For backwards compatibility and initial state, always show at least 5
+                                            if (lineupKeys.length < 5) {
+                                                const missing = 5 - lineupKeys.length;
+                                                for (let i = 1; i <= missing; i++) {
+                                                    if (!lineupKeys.includes(`atracao${i}`)) lineupKeys.push(`atracao${i}`);
+                                                }
+                                                lineupKeys.sort((a, b) => (parseInt(a.replace('atracao', ''), 10) || 0) - (parseInt(b.replace('atracao', ''), 10) || 0));
+                                            }
 
                                             return (
-                                                <div key={num} className="space-y-1">
-                                                    <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">Atração {num}</label>
-                                                    <div className="flex gap-2">
-                                                        <input
-                                                            type="time"
-                                                            className="w-24 px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-sm text-[var(--text-main)]"
-                                                            value={time}
-                                                            onChange={(e) => setFormData({
-                                                                ...formData,
-                                                                details_lineup: {
-                                                                    ...formData.details_lineup,
-                                                                    [key]: { time: e.target.value, name }
-                                                                }
-                                                            })}
-                                                        />
-                                                        <input
-                                                            type="text"
-                                                            className="flex-1 px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-sm text-[var(--text-main)] placeholder:opacity-40"
-                                                            placeholder="Nome do Artista"
-                                                            value={name}
-                                                            onChange={(e) => setFormData({
-                                                                ...formData,
-                                                                details_lineup: {
-                                                                    ...formData.details_lineup,
-                                                                    [key]: { time, name: e.target.value }
-                                                                }
-                                                            })}
-                                                        />
+                                                <>
+                                                    <div className="space-y-3">
+                                                        {lineupKeys.map((key, index) => {
+                                                            const num = parseInt(key.replace('atracao', ''), 10) || index + 1;
+                                                            const value = (formData.details_lineup as any)[key];
+                                                            const time = typeof value === 'object' ? value?.time || '' : '';
+                                                            const name = typeof value === 'object' ? value?.name || '' : (typeof value === 'string' ? value : '');
+
+                                                            return (
+                                                                <div key={key} className="space-y-1 relative group">
+                                                                    <div className="flex justify-between items-center">
+                                                                        <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">
+                                                                            Atração {num}
+                                                                        </label>
+                                                                        {lineupKeys.length > 5 && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    const newDetails = { ...formData.details_lineup };
+                                                                                    delete (newDetails as any)[key];
+                                                                                    setFormData({ ...formData, details_lineup: newDetails });
+                                                                                }}
+                                                                                className="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                                                                                title="Remover atração"
+                                                                            >
+                                                                                <X size={14} />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex gap-2">
+                                                                        <input
+                                                                            type="time"
+                                                                            className="w-24 px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-sm text-[var(--text-main)]"
+                                                                            value={time}
+                                                                            onChange={(e) => setFormData({
+                                                                                ...formData,
+                                                                                details_lineup: {
+                                                                                    ...formData.details_lineup,
+                                                                                    [key]: { time: e.target.value, name }
+                                                                                }
+                                                                            })}
+                                                                        />
+                                                                        <input
+                                                                            type="text"
+                                                                            className="flex-1 px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-sm text-[var(--text-main)] placeholder:opacity-40"
+                                                                            placeholder="Nome do Artista"
+                                                                            value={name}
+                                                                            onChange={(e) => setFormData({
+                                                                                ...formData,
+                                                                                details_lineup: {
+                                                                                    ...formData.details_lineup,
+                                                                                    [key]: { time, name: e.target.value }
+                                                                                }
+                                                                            })}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
-                                                </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const maxNum = Math.max(...lineupKeys.map(k => parseInt(k.replace('atracao', ''), 10) || 0), 0);
+                                                            const newKey = `atracao${maxNum + 1}`;
+                                                            setFormData({
+                                                                ...formData,
+                                                                details_lineup: {
+                                                                    ...formData.details_lineup,
+                                                                    [newKey]: { time: '', name: '' }
+                                                                }
+                                                            });
+                                                        }}
+                                                        className="flex items-center justify-center w-full sm:w-auto text-sm font-bold text-primary-600 hover:text-primary-700 transition-colors bg-primary-50 hover:bg-primary-100 px-4 py-2.5 rounded-xl border border-primary-200 mt-2"
+                                                    >
+                                                        <Plus size={16} className="mr-2" strokeWidth={2.5} /> Adicionar Atração
+                                                    </button>
+                                                </>
                                             );
-                                        })}
+                                        })()}
                                     </div>
                                 </div>
                             )}
