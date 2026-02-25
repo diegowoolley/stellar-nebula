@@ -46,6 +46,7 @@ import contractorRoutes from './routes/contractors.js';
 import userRoutes from './routes/users.js';
 import publicRoutes from './routes/public.js';
 import statsRoutes from './routes/stats.js';
+import financeRoutes from './routes/finance.js';
 
 // Registro das rotas da API
 app.use('/api/auth', authRoutes);
@@ -55,6 +56,7 @@ app.use('/api/contractors', contractorRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/finance', financeRoutes);
 
 // Centralized error handling
 app.use(errorHandler);

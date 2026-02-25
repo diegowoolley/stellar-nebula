@@ -102,10 +102,17 @@ export const Calendar = () => {
                 api.get('/artists'),
                 api.get('/events')
             ]);
-            setArtists(artistsRes.data);
+            // Apenas artistas com assinatura ativa
+            const activeArtists = artistsRes.data.filter((a: any) => a.subscription_status === 'ativo');
+            setArtists(activeArtists);
 
-            // Filtra os eventos localmente com base nos seletores da UI
-            let filteredEvents = eventsRes.data;
+            const activeArtistIds = activeArtists.map((a: any) => a.id);
+
+            // Filtra os eventos localmente:
+            // 1. Apenas eventos de artistas ativos
+            // 2. Filtro de UI por artista
+            // 3. Filtro de UI por status
+            let filteredEvents = eventsRes.data.filter((e: any) => activeArtistIds.includes(e.artist_id));
             if (selectedArtistId) {
                 filteredEvents = filteredEvents.filter((e: any) => e.artist_id === selectedArtistId);
             }
@@ -120,14 +127,18 @@ export const Calendar = () => {
 
     const handleStatusUpdate = async (e: React.MouseEvent, eventId: string, newStatus: string) => {
         e.stopPropagation(); // Prevents opening the modal
-        if (!confirm(`Deseja alterar o status para ${newStatus === 'confirmed' ? 'Confirmado' : newStatus === 'pending' ? 'Pendente' : 'Cancelado'}?`)) return;
+        const statusLabel = newStatus === 'confirmed' ? 'Confirmado' : newStatus === 'pending' ? 'Pendente' : 'Cancelado';
+        if (!confirm(`Deseja alterar o status para ${statusLabel}?`)) return;
 
         try {
             await api.put(`/events/${eventId}`, { status: newStatus });
             await fetchData(); // Refresh list from server
-        } catch (error) {
+            // Feedback visual sutil (Opcional, mas ajuda)
+            // alert('Status atualizado com sucesso!'); 
+        } catch (error: any) {
             console.error('Erro ao atualizar status:', error);
-            alert('Erro ao atualizar status do evento.');
+            const errorMessage = error.response?.data?.error || 'Erro ao atualizar status do evento.';
+            alert(errorMessage);
         }
     };
 
@@ -285,19 +296,22 @@ export const Calendar = () => {
                         <button
                             onClick={() => setSelectedArtistId(null)}
                             className={clsx(
-                                "flex-shrink-0 flex flex-col items-center p-3 rounded-2xl border transition-all duration-200 w-32 shadow-sm hover:translate-y-[-2px]",
-                                !selectedArtistId
-                                    ? "bg-[var(--agenda-bg-accent)] text-[var(--agenda-text-accent)] border-[var(--agenda-border-accent)] ring-4 ring-primary-500/10"
-                                    : "bg-[var(--bg-main)] border-[var(--border-main)] text-[var(--text-muted)] hover:border-primary-400 hover:text-[var(--text-main)]"
+                                "flex-shrink-0 flex flex-col items-center group transition-all duration-200 w-20",
+                                !selectedArtistId ? "opacity-100" : "opacity-60 hover:opacity-100"
                             )}
                         >
                             <div className={clsx(
-                                "w-14 h-14 rounded-full flex items-center justify-center mb-2 font-black text-[10px] tracking-widest border border-dashed transition-colors",
-                                !selectedArtistId ? "bg-[var(--agenda-text-accent)]/10 text-[var(--agenda-text-accent)] border-[var(--agenda-border-accent)]/30" : "bg-[var(--bg-sidebar)] text-[var(--text-muted)] border-[var(--border-main)]"
+                                "w-14 h-14 rounded-full flex items-center justify-center mb-1 transition-all duration-200 border shadow-sm",
+                                !selectedArtistId
+                                    ? "bg-primary-600 text-white border-primary-600 scale-110 shadow-lg shadow-primary-500/20"
+                                    : "bg-[var(--bg-main)] text-[var(--text-muted)] border-[var(--border-main)] hover:border-primary-400"
                             )}>
-                                ALL
+                                <UsersIcon size={24} strokeWidth={2.5} />
                             </div>
-                            <span className="text-[10px] font-black uppercase truncate w-full text-center">
+                            <span className={clsx(
+                                "text-[10px] font-bold uppercase truncate w-full text-center transition-colors",
+                                !selectedArtistId ? "text-primary-600" : "text-[var(--text-muted)]"
+                            )}>
                                 Todos
                             </span>
                         </button>
@@ -309,28 +323,31 @@ export const Calendar = () => {
                                     key={artist.id}
                                     onClick={() => setSelectedArtistId(artist.id)}
                                     className={clsx(
-                                        "flex-shrink-0 flex flex-col items-center p-3 rounded-2xl border transition-all duration-200 w-32 shadow-sm hover:translate-y-[-2px]",
-                                        isActive
-                                            ? "bg-[var(--agenda-bg-accent)] text-[var(--agenda-text-accent)] border-[var(--agenda-border-accent)] ring-4 ring-primary-500/10"
-                                            : "bg-[var(--bg-main)] border-[var(--border-main)] text-[var(--text-muted)] hover:border-primary-400 hover:text-[var(--text-main)]"
+                                        "flex-shrink-0 flex flex-col items-center group transition-all duration-200 w-20",
+                                        isActive ? "opacity-100" : "opacity-60 hover:opacity-100"
                                     )}
                                 >
                                     <div className={clsx(
-                                        "w-14 h-14 rounded-full flex items-center justify-center mb-2 overflow-hidden border shadow-sm transition-colors",
-                                        isActive ? "bg-[var(--agenda-bg-accent)] border-[var(--agenda-border-accent)]/30" : "bg-[var(--bg-sidebar)] border-[var(--border-main)]"
+                                        "w-14 h-14 rounded-full flex items-center justify-center mb-1 overflow-hidden border transition-all duration-200 shadow-sm",
+                                        isActive
+                                            ? "border-primary-600 ring-2 ring-primary-600 ring-offset-2 ring-offset-[var(--bg-sidebar)] scale-110"
+                                            : "border-[var(--border-main)]"
                                     )}>
                                         {artist.logo_url ? (
                                             <img src={artist.logo_url} alt={artist.name} className="w-full h-full object-cover" />
                                         ) : (
                                             <span className={clsx(
                                                 "text-sm font-black",
-                                                isActive ? "text-[var(--agenda-text-accent)]" : "text-[var(--text-muted)] opacity-50"
+                                                isActive ? "text-primary-600" : "text-[var(--text-muted)] opacity-50"
                                             )}>
                                                 {artist.name.substring(0, 2).toUpperCase()}
                                             </span>
                                         )}
                                     </div>
-                                    <span className="text-[10px] font-black uppercase truncate w-full text-center">
+                                    <span className={clsx(
+                                        "text-[10px] font-bold uppercase truncate w-full text-center transition-colors",
+                                        isActive ? "text-primary-600" : "text-[var(--text-muted)]"
+                                    )}>
                                         {artist.name}
                                     </span>
                                 </button>

@@ -173,6 +173,7 @@ export const ExternalRequest = () => {
         try {
             await axios.post(`${API_URL}/public/event`, {
                 ...formData,
+                token, // Incluir token para expiração
                 // contractor_id já está no state
             });
             setIsSubmitted(true);

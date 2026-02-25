@@ -14,7 +14,8 @@ import {
     X,
     User,
     Sun,
-    Moon
+    Moon,
+    DollarSign
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useTheme } from '../../context/ThemeContext';
@@ -37,6 +38,7 @@ export const AppLayout = () => {
             { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
             { name: 'Agenda', href: '/calendar', icon: Calendar },
             { name: 'Artistas', href: '/artists', icon: Users },
+            { name: 'Financeiro', href: '/finance', icon: DollarSign },
             { name: 'Contratantes', href: '/contractors', icon: Briefcase },
             { name: 'Usuários', href: '/users', icon: User },
         ]

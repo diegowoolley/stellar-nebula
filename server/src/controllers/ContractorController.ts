@@ -63,6 +63,25 @@ export class ContractorController {
             if (error || !data) throw new AppError('Contratante não encontrado', 404);
 
             const token = jwt.sign({ contractorId: id }, JWT_SECRET, { expiresIn: '24h' });
+
+            // Armazenar o token no banco para controle de uso único
+            const expiresAt = new Date();
+            expiresAt.setHours(expiresAt.getHours() + 24);
+
+            const { error: linkError } = await supabase
+                .from('external_request_links')
+                .insert({
+                    contractor_id: id,
+                    token,
+                    status: 'pending',
+                    expires_at: expiresAt.toISOString()
+                });
+
+            if (linkError) {
+                console.error('Erro ao registrar link:', linkError);
+                // Não travamos o processo aqui, mas o controle de uso único pode falhar se o insert falhar
+            }
+
             res.json({ token });
         } catch (error) {
             next(error);

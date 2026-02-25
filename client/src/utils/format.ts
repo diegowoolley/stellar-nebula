@@ -18,3 +18,24 @@ export const maskPhone = (value: string) => {
         return limited.replace(/^(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
     }
 };
+
+export const maskCurrency = (value: string | number) => {
+    let val = String(value).replace(/\D/g, "");
+
+    // Converte para centavos
+    const options = { minimumFractionDigits: 2 };
+    const result = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        ...options
+    }).format(parseFloat(val) / 100);
+
+    return result;
+};
+
+export const parseCurrencyToNumber = (value: string) => {
+    if (!value) return 0;
+    // Remove tudo exceto números
+    const cleanValue = value.replace(/\D/g, "");
+    return parseFloat(cleanValue) / 100;
+};

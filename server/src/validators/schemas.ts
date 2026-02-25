@@ -20,7 +20,8 @@ export const publicEventSchema = z.object({
     details_suppliers: z.record(z.string(), z.any()).optional().nullable(),
     details_transports: z.record(z.string(), z.any()).optional().nullable(),
     details_lodging: z.record(z.string(), z.any()).optional().nullable(),
-    details_lineup: z.record(z.string(), z.any()).optional().nullable()
+    details_lineup: z.record(z.string(), z.any()).optional().nullable(),
+    token: z.string().optional()
 }).passthrough();
 
 export const authenticatedEventSchema = publicEventSchema.extend({

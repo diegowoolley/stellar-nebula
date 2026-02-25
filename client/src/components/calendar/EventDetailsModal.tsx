@@ -73,6 +73,9 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
     const handleStatusUpdate = async (newStatus: string) => {
         if (!event || isUpdating) return;
 
+        const statusLabel = newStatus === 'confirmed' ? 'Confirmado' : newStatus === 'pending' ? 'Pendente' : 'Cancelado';
+        if (!confirm(`Deseja alterar o status para ${statusLabel}?`)) return;
+
         try {
             setIsUpdating(true);
             const response = await api.put(`/events/${event.id}`, { status: newStatus });
@@ -81,9 +84,10 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ isOpen, on
                 if (onEventUpdate) onEventUpdate(response.data);
                 if (onUpdate) onUpdate();
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erro ao atualizar status do evento:', error);
-            alert('Não foi possível atualizar o status do evento.');
+            const errorMessage = error.response?.data?.error || 'Não foi possível atualizar o status do evento.';
+            alert(errorMessage);
         } finally {
             setIsUpdating(false);
         }

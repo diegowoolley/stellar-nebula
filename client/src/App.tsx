@@ -13,6 +13,7 @@ import { ExternalRequest } from './pages/PublicEventRequest';
 import Profile from './pages/Profile';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
+import { Finance } from './pages/Finance';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
               <Route path="/artists" element={<Artists />} />
               <Route path="/contractors" element={<Contractors />} />
               <Route path="/users" element={<Users />} />
+              <Route path="/finance" element={<Finance />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/events/new" element={<NewEvent />} />
               <Route path="/events/edit/:id" element={<NewEvent />} />

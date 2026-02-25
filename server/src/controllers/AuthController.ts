@@ -10,11 +10,12 @@ const JWT_SECRET = process.env.JWT_SECRET;
 export class AuthController {
     static async register(req: Request, res: Response, next: NextFunction) {
         const { email, password, name } = req.body;
+        const normalizedEmail = email.toLowerCase();
         try {
             const hashedPassword = await bcrypt.hash(password, 10);
             const { data, error } = await supabase
                 .from('users')
-                .insert([{ email, password: hashedPassword, name, role: 'user' }])
+                .insert([{ email: normalizedEmail, password: hashedPassword, name, role: 'user' }])
                 .select();
 
             if (error) throw new AppError(error.message, 400);
@@ -26,13 +27,14 @@ export class AuthController {
 
     static async login(req: Request, res: Response, next: NextFunction) {
         const { email, password } = req.body;
+        const normalizedEmail = email.toLowerCase();
         try {
             if (!JWT_SECRET) throw new AppError('JWT_SECRET is not defined in environment', 500);
 
             const { data: user, error } = await supabase
                 .from('users')
                 .select('*')
-                .eq('email', email)
+                .eq('email', normalizedEmail)
                 .single();
 
             if (error || !user) {

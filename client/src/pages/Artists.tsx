@@ -8,6 +8,7 @@ interface Artist {
     id: string;
     name: string;
     logo_url: string;
+    subscription_status: 'ativo' | 'inativo';
 }
 
 export const Artists = () => {
@@ -71,7 +72,7 @@ export const Artists = () => {
         fData.append('file', file);
 
         try {
-            const res = await api.post('/artists/upload', fData, {
+            const res = await api.post('/artists/upload-logo', fData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setFormData(prev => ({ ...prev, logo_url: res.data.url }));
@@ -149,7 +150,14 @@ export const Artists = () => {
                                         {artist.name}
                                     </h3>
                                     <div className="flex items-center mt-0.5">
-                                        <span className="text-[10px] font-bold text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded uppercase border border-green-500/20">Ativo</span>
+                                        <span className={clsx(
+                                            "text-[10px] font-bold px-1.5 py-0.5 rounded uppercase border",
+                                            artist.subscription_status === 'ativo'
+                                                ? "text-green-600 bg-green-500/10 border-green-500/20"
+                                                : "text-red-600 bg-red-500/10 border-red-500/20"
+                                        )}>
+                                            {artist.subscription_status === 'ativo' ? 'Ativo' : 'Inativo'}
+                                        </span>
                                     </div>
                                 </div>
                                 <button className="text-[var(--text-muted)] hover:text-secondary-600">

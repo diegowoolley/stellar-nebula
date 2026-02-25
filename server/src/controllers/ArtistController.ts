@@ -6,6 +6,19 @@ import type { AuthRequest } from '../middleware/auth.js';
 export class ArtistController {
     static async getAllArtists(req: AuthRequest, res: Response, next: NextFunction) {
         try {
+            // Check and update expired subscriptions first
+            await supabase
+                .from('artist_subscriptions')
+                .update({ status: 'inativo' })
+                .eq('status', 'ativo')
+                .lt('end_date', new Date().toISOString());
+
+            await supabase
+                .from('artists')
+                .update({ subscription_status: 'inativo' })
+                .eq('subscription_status', 'ativo')
+                .lt('subscription_expires_at', new Date().toISOString());
+
             const { data, error } = await supabase.from('artists').select('*').order('name');
             if (error) throw new AppError(error.message, 500);
             res.json(data);
@@ -60,6 +73,9 @@ export class ArtistController {
             const fileExt = file.originalname.split('.').pop();
             const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
             const filePath = `logos/${fileName}`;
+
+            // Ensure bucket exists (optional Se já existir)
+            await supabase.storage.createBucket('images', { public: true });
 
             const { error } = await supabase.storage
                 .from('images')

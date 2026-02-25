@@ -121,15 +121,34 @@ export class EventController {
 
     static async updateEvent(req: AuthRequest, res: Response, next: NextFunction) {
         try {
-            const { updated_at, ...updates } = req.body;
+            // Filtrar apenas campos permitidos para evitar erro se o frontend enviar o objeto completo com relações
+            const allowedFields = [
+                'artist_id', 'contractor_id', 'city', 'state', 'date', 'type',
+                'status', 'event_name', 'venue_name', 'contract_url',
+                'details_contacts', 'details_suppliers', 'details_transports',
+                'details_lodging', 'details_lineup'
+            ];
+
+            const updates: any = {};
+            Object.keys(req.body).forEach(key => {
+                if (allowedFields.includes(key)) {
+                    updates[key] = req.body[key];
+                }
+            });
+
+            console.log(`Atualizando evento ${req.params.id} com os campos:`, updates);
             const { data, error } = await supabase
                 .from('events')
-                .update({ ...updates, updated_at: new Date() })
+                .update({ ...updates, updated_at: new Date().toISOString() })
                 .eq('id', req.params.id)
                 .select()
                 .single();
 
-            if (error) throw new AppError(error.message, 400);
+            if (error) {
+                console.error('Erro no checkout do update:', error);
+                throw new AppError(error.message, 400);
+            }
+            console.log('Evento atualizado com sucesso:', data);
             res.json(data);
         } catch (error) {
             next(error);
