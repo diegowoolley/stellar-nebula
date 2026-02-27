@@ -288,21 +288,21 @@ export const Finance = () => {
                             ))}
                         </select>
                     </div>
-                    <div className="flex flex-row gap-4 items-end w-full md:w-auto">
-                        <div className="flex-1 sm:w-36">
-                            <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase mb-1">De</label>
+                    <div className="flex w-full md:w-auto items-end space-x-3 sm:space-x-4">
+                        <div className="flex-1 min-w-0 sm:w-36">
+                            <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase mb-1 truncate">De</label>
                             <input
                                 type="date"
-                                className="w-full p-2 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full p-2 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-primary-500 box-border"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
                             />
                         </div>
-                        <div className="flex-1 sm:w-36">
-                            <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase mb-1">Até</label>
+                        <div className="flex-1 min-w-0 sm:w-36">
+                            <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase mb-1 truncate">Até</label>
                             <input
                                 type="date"
-                                className="w-full p-2 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full p-2 bg-[var(--bg-main)] border border-[var(--border-main)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-primary-500 box-border"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
                             />
