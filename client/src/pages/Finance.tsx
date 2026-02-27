@@ -288,8 +288,8 @@ export const Finance = () => {
                             ))}
                         </select>
                     </div>
-                    <div className="flex w-full md:w-auto items-end space-x-3 sm:space-x-4">
-                        <div className="flex-1 min-w-0 sm:w-36">
+                    <div className="flex flex-col sm:flex-row w-full md:w-auto items-start sm:items-end gap-3 sm:gap-4">
+                        <div className="w-full sm:flex-1 sm:w-36">
                             <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase mb-1 truncate">De</label>
                             <input
                                 type="date"
@@ -298,7 +298,7 @@ export const Finance = () => {
                                 onChange={(e) => setStartDate(e.target.value)}
                             />
                         </div>
-                        <div className="flex-1 min-w-0 sm:w-36">
+                        <div className="w-full sm:flex-1 sm:w-36">
                             <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase mb-1 truncate">Até</label>
                             <input
                                 type="date"
@@ -315,7 +315,7 @@ export const Finance = () => {
                                 setStartDate('');
                                 setEndDate('');
                             }}
-                            className="p-2 text-[var(--text-muted)] hover:text-red-500 transition-colors"
+                            className="p-2 text-[var(--text-muted)] hover:text-red-500 transition-colors self-end sm:self-auto"
                             title="Limpar Filtros"
                         >
                             <X size={20} />
